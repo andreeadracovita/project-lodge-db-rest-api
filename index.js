@@ -18,7 +18,7 @@ app.get("/properties", (req, res) => {
 		const foundPropertyDetail = property_details.find(pd => pd.property_id === p.id);
 		if (p.is_listed) {
 			responseData.push({
-				...p
+				...p,
 				price: foundPropertyDetail ? foundPropertyDetail.price_per_night_eur : 0,
 				img_url: foundPropertyDetail ? foundPropertyDetail.images_url_array[0] : null,
 				rating: foundPropertyDetail ? foundPropertyDetail.rating : 0
