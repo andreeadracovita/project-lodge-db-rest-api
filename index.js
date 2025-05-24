@@ -1,13 +1,80 @@
 import express from "express";
+import bodyParser from "body-parser";
 import cors from "cors";
+import bcrypt from "bcrypt";
+import passport from "passport";
+import { Strategy } from "passport-local";
+import session from "express-session";
 // import pg from "pg";
 
 const app = express();
 const port = 3000;
+// const saltRounds = 10;
 
 app.use(cors()); // Enable CORS
 
+app.use(
+	session({
+		secret: "MYSECRET",
+		resave: false,
+		saveUninitialized: true
+	})
+);
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Users
+app.get("/user/:email", (req, res) => {
+	const email = req.params.email;
+	if (users.find(user => user.email === req.params.email)) {
+		res.status(200).send("OK");
+		return;
+	}
+	res.status(404).send("User does not exist");
+});
+
+app.post(
+	"/user/login",
+	passport.authenticate("local", {
+		failWithError: true
+	}), function(req, res, next) {
+		// Handle success
+		res.status(200).send("OK");
+	},
+	function(err, req, res, next) {
+		res.status(401).send("Unauthorized");
+	}
+);
+
+passport.use("local", new Strategy(
+	{
+		usernameField: "email",
+		passwordField: "password"
+	},
+	 function verify(username, password, cb) {
+		const foundUser = users.find(user => user.email === username);
+		if (foundUser) {
+			if (foundUser.password === password) {
+				return cb(null, foundUser);
+			} else {
+				return cb(null, false);
+			}
+		} else {
+			return cb("User not found.");
+		}
+	})
+);
+
+passport.serializeUser((user, cb) => {
+	cb(null, user);
+});
+passport.deserializeUser((user, cb) => {
+	cb(null, user);
+});
 
 // Properties
 // GET properties
@@ -68,7 +135,7 @@ app.get("/features", (req, res) => {
 });
 
 app.listen(port, () => {
-	console.log(`Backend Server running on port ${port}`);
+	console.log(`Backend server running on port ${port}`);
 });
 
 const users = [
