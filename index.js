@@ -4,18 +4,22 @@ import cors from "cors";
 import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import jwt from "jsonwebtoken";
 import session from "express-session";
-// import pg from "pg";
+import pg from "pg";
+import env from "dotenv";
 
 const app = express();
 const port = 3000;
 // const saltRounds = 10;
+env.config();
 
-app.use(cors()); // Enable CORS
+app.use(cors());
 
 app.use(
 	session({
-		secret: "MYSECRET",
+		secret: process.env.SESSION_SECRET,
 		resave: false,
 		saveUninitialized: true
 	})
@@ -27,53 +31,95 @@ app.use(bodyParser.json());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Users
-app.get("/user/:email", (req, res) => {
-	const email = req.params.email;
-	if (users.find(user => user.email === req.params.email)) {
-		res.status(200).send("OK");
-		return;
-	}
-	res.status(404).send("User does not exist");
+const db = new pg.Client({
+	user: process.env.PG_USER,
+	host: process.env.PG_HOST,
+	database: process.env.PG_DATABASE,
+	password: process.env.PG_PASSWORD,
+	port: process.env.PG_PORT
 });
-
-app.post(
-	"/user/login",
-	passport.authenticate("local", {
-		failWithError: true
-	}), function(req, res, next) {
-		// Handle success
-		res.status(200).send("OK");
-	},
-	function(err, req, res, next) {
-		res.status(401).send("Unauthorized");
-	}
-);
+db.connect();
 
 passport.use("local", new Strategy(
 	{
 		usernameField: "email",
 		passwordField: "password"
 	},
-	 function verify(username, password, cb) {
-		const foundUser = users.find(user => user.email === username);
-		if (foundUser) {
-			if (foundUser.password === password) {
-				return cb(null, foundUser);
-			} else {
-				return cb(null, false);
+	async function verify(username, password, cb) {
+		try {
+			const result = await db.query("SELECT * FROM users WHERE email = $1", [
+				username
+			]);
+			if (result.rows.length > 0) {
+				const user = result.rows[0];
+				if (user.password === password) {
+					return cb(null, user);
+				} else {
+					return cb(null, false);
+				}
 			}
-		} else {
-			return cb("User not found.");
+		} catch (err) {
+			console.log(err);
 		}
 	})
 );
+let opts = {
+	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+	secretOrKey: process.env.SECRET
+};
+passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
+	User.findOne({id: jwt_payload.sub}, function(err, user) {
+
+		if (err) {
+			return done(err, false);
+		}
+
+		if (user) {
+			return done(null, user);
+		} else {
+			return done(null, false);
+		}
+	})
+}));
 
 passport.serializeUser((user, cb) => {
 	cb(null, user);
 });
 passport.deserializeUser((user, cb) => {
 	cb(null, user);
+});
+
+// Users
+app.get("/user/:email", async (req, res) => {
+	const email = req.params.email;
+	try {
+		const result = await db.query("SELECT * FROM users WHERE email = $1", [
+			email
+		]);
+		if (result.rows.length > 0) {
+			res.status(200).send("OK");
+		} else {
+			res.status(404).send("User does not exist");
+		}
+	} catch (err) {
+		console.log(err);
+		res.status(500).send("Error connecting to db");
+	}
+});
+
+app.post("/user/login", function(req, res, next) {
+	passport.authenticate("local", { session: false }, function(err, user, info) {
+		if (err || !user) {
+			return res.status(400).json({ message: "Something went wrong", user: user });
+		}
+		req.login(user, { session: false }, function(err) {
+			if (err) {
+				res.send(err);
+			}
+			const token = jwt.sign(user, process.env.SECRET, { expiresIn: "1h" });
+			return res.json({ user, token });
+		});
+	})(req, res);
 });
 
 // Properties
@@ -120,53 +166,38 @@ app.get("/properties/:id", (req, res) => {
 });
 
 // Building Types
-app.get("/building_types", (req, res) => {
-	res.json(building_types);
+app.get("/building_types", async (req, res) => {
+	try {
+		const result = await db.query("SELECT * FROM property_types");
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 // Rental Types
-app.get("/rental_types", (req, res) => {
-	res.json(rental_types);
+app.get("/rental_types", async (req, res) => {
+	try {
+		const result = await db.query("SELECT * FROM rental_types");
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 // Features
-app.get("/features", (req, res) => {
-	res.json(features);
+app.get("/features", async (req, res) => {
+	try {
+		const result = await db.query("SELECT * FROM features");
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 app.listen(port, () => {
 	console.log(`Backend server running on port ${port}`);
 });
-
-const users = [
-	{
-		id: 1,
-		email: "abc@abc.com",
-		password: "pass"
-	},
-	{
-		id: 2,
-		email: "def@def.com",
-		password: "password"
-	}
-];
-
-const user_details = [
-	{
-		user_id: 1,
-		first_name: "Sweeney",
-		last_name: "Todd",
-		created_at: "2025-01-01",
-		img_url: null
-	},
-	{
-		user_id: 2,
-		first_name: "Jane",
-		last_name: "Doe",
-		created_at: "2024-09-05",
-		img_url: "00000002_1.jpg"
-	}
-];
 
 const properties = [
 	{
@@ -265,87 +296,6 @@ const property_details = [
 		],
 		rating: 4.95
 	},
-];
-
-const building_types = [
-	{
-		id: 1,
-		name: "Cabin"
-	},
-	{
-		id: 2,
-		name: "Hotel"
-	},
-	{
-		id: 3,
-		name: "Apartment"
-	},
-	{
-		id: 4,
-		name: "Villa"
-	},
-	{
-		id: 5,
-		name: "Chalet"
-	},
-	{
-		id: 6,
-		name: "Ryokan"
-	},
-	{
-		id: 7,
-		name: "Bnb"
-	}
-];
-
-const rental_types = [
-	{
-		id: 1,
-		name: "Room"
-	},
-	{
-		id: 2,
-		name: "Entire place"
-	}
-];
-
-const features = [
-	{
-		id: 1,
-		name: "Free WiFi"
-	},
-	{
-		id: 2,
-		name: "Free parking"
-	},
-	{
-		id: 3,
-		name: "Kitchen"
-	},
-	{
-		id: 4,
-		name: "Lake view"
-	},
-	{
-		id: 5,
-		name: "Sea view"
-	},
-	{
-		id: 6,
-		name: "Mountain view"
-	},
-	{
-		id: 7,
-		name: "BBQ grill"
-	},
-	{
-		id: 8,
-		name: "Gym equipment"
-	},
-	{
-		id: 9,
-		name: "TV"
-	}
 ];
 
 const reviews = [];
