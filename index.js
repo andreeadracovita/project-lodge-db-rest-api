@@ -90,16 +90,16 @@ passport.deserializeUser((user, cb) => {
 });
 
 // Users
-app.get("/user/:email", async (req, res) => {
+app.get("/user/exists/:email", async (req, res) => {
 	const email = req.params.email;
 	try {
 		const result = await db.query("SELECT * FROM users WHERE email = $1", [
 			email
 		]);
 		if (result.rows.length > 0) {
-			res.status(200).send("OK");
+			res.json({ userExists: true });
 		} else {
-			res.status(404).send("User does not exist");
+			res.json({ userExists: false });
 		}
 	} catch (err) {
 		console.log(err);
