@@ -32,7 +32,10 @@ router.post("/login", function(req, res, next) {
 				res.send(err);
 			}
 			const token = jwt.sign(user, process.env.SECRET); // { expiresIn: "1h" }
-			return res.json({ user, token });
+			const userResponse = {
+				email: user.email
+			}
+			return res.json({ userResponse, token });
 		});
 	})(req, res);
 });

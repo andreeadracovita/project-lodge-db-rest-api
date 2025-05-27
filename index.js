@@ -1,14 +1,12 @@
-import express from "express";
+import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import cors from "cors";
-import bcrypt from "bcrypt";
-import passport from "passport";
-import { Strategy } from "passport-local";
-import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-import jwt from "jsonwebtoken";
-import session from "express-session";
 import env from "dotenv";
+import express from "express";
+import passport from "passport";
+import session from "express-session";
 
+import "./passport.js";
 import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import propertiesRouter from "./routes/properties.js";
@@ -32,58 +30,13 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 app.use("/auth", authRouter);
-app.use("/user", userRouter);
+app.use("/user", passport.authenticate('jwt', {session: false}), userRouter);
 app.use("/properties", propertiesRouter);
 app.use("/types", typesRouter);
-
-passport.use("local", new Strategy(
-	{
-		usernameField: "email",
-		passwordField: "password"
-	},
-	async function verify(username, password, cb) {
-		try {
-			const result = await db.query("SELECT * FROM users WHERE email = $1", [
-				username
-			]);
-			if (result.rows.length > 0) {
-				const user = result.rows[0];
-				if (user.password === password) {
-					return cb(null, user);
-				} else {
-					return cb(null, false);
-				}
-			}
-		} catch (err) {
-			return cb(err);
-		}
-	})
-);
-
-let opts = {
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-	secretOrKey: process.env.SECRET
-};
-passport.use(new JwtStrategy(opts, function(jwtPayload, cb) {
-	User.findOneById(jwtPayload.id)
-		.then(user => {
-			return cb(null, user);
-		})
-		.catch(err => {
-			return cb(err);
-		});
-}));
-
-passport.serializeUser((user, cb) => {
-	cb(null, user);
-});
-passport.deserializeUser((user, cb) => {
-	cb(null, user);
-});
 
 app.listen(port, () => {
 	console.log(`Backend server running on port ${port}`);
