@@ -9,7 +9,7 @@ import session from "express-session";
 import "./passport.js";
 import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
-import propertiesRouter from "./routes/properties.js";
+import propertyRouter from "./routes/property.js";
 import typesRouter from "./routes/types.js";
 
 const app = express();
@@ -35,7 +35,7 @@ app.use(bodyParser.json());
 
 app.use("/auth", authRouter);
 app.use("/user", passport.authenticate('jwt', {session: false}), userRouter);
-app.use("/properties", propertiesRouter);
+app.use("/property", propertyRouter);
 app.use("/types", typesRouter);
 
 app.listen(port, () => {

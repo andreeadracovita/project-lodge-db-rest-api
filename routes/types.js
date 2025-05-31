@@ -30,4 +30,13 @@ router.get("/feature", async (req, res) => {
 	}
 });
 
+router.get("/experience", async (req, res) => {
+	try {
+		const result = await db.query("SELECT * FROM experiences");
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+})
+
 export default router;
