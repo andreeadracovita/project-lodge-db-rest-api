@@ -37,4 +37,19 @@ router.get("/properties", async (req, res) => {
 	}
 });
 
+router.post("/properties/new", async (req, res) => {
+	try {
+		const { title, geo, city, country, is_listed } = req.body;
+		const result = await db.query("INSERT INTO properties (title, geo, city, country, is_listed) VALUES ($1, POINT($2, $3), $4, $5, $6) RETURNING id", [
+			title, geo.x, geo.y, city, country, is_listed
+		]);
+		if (result.rows.length > 0) {
+			console.log("Successfully added!");
+			res.status(200).send(result.rows[0]);
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 export default router;
