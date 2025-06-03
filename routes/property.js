@@ -6,7 +6,7 @@ const router = express.Router();
 // GET /property/all
 router.get("/all", async (req, res) => {
 	try {
-		const result = await db.query("SELECT p.id, p.title, p.geo, p.city, p.country, p.is_listed, pd.rating, pd.images_url_array, CAST(pd.price_per_night_eur AS MONEY) AS price FROM properties AS p, property_details AS pd WHERE p.id = pd.property_id", []);
+		const result = await db.query("SELECT p.id, p.title, p.geo, p.city, p.country, p.is_listed, pd.rating, pd.images_url_array, pd.price_per_night_eur AS price FROM properties AS p, property_details AS pd WHERE p.id = pd.property_id AND p.is_listed = true", []);
 		res.json(result.rows);
 	} catch (err) {
 		console.log(err);
