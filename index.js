@@ -29,7 +29,8 @@ app.use(
 	})
 );
 
-app.use(express.static("file_storage"));
+// app.use(express.static("file_storage"));
+app.use(express.static("../file_storage"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

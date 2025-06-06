@@ -21,7 +21,6 @@ router.post("/properties/new", async (req, res) => {
 			title, geo.x, geo.y, city, country, is_listed
 		]);
 		if (result.rows.length > 0) {
-			console.log("Successfully added!");
 			res.status(200).send(result.rows[0]);
 		}
 	} catch (err) {
@@ -68,7 +67,6 @@ router.patch("/property/:id", async (req, res) => {
 
 router.post("/property-details/new/base", async (req, res) => {
 	try {
-		console.log(req.body);
 		const {
 			property_id,
 			street,
@@ -79,7 +77,6 @@ router.post("/property-details/new/base", async (req, res) => {
 			property_id, req.user.id, street, street_no, new Date().toISOString().slice(0, 10)
 		]);
 		if (result.rows.length > 0) {
-			console.log("Successfully added!");
 			res.status(200).send("OK");
 		}
 	} catch (err) {
@@ -159,6 +156,33 @@ router.patch("/property-details/:id", async (req, res) => {
 			await updatePropertyDetailField(id, "rating", rating);
 		}
 		res.status(200).send("OK");
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+router.delete("/property/:id", async (req, res) => {
+	const id = parseInt(req.params.id);
+	try {
+		const result = await db.query("SELECT * FROM property_details WHERE property_id=$1", [id]);
+		if (result.rows.length === 1) {
+			const hostId = result.rows[0].host_id;
+			if (hostId === req.user.id) {
+				// Check if property_id appears in any bookings
+				// Delete only if bookings
+				const bookingResult = await db.query("SELECT * FROM bookings WHERE property_id=$1", [id]);
+				if (bookingResult.rows.length === 0) {
+					await db.query("DELETE FROM property_details WHERE property_id=$1", [id]);
+					await db.query("DELETE FROM properties WHERE id=$1", [id]);
+					return res.status(200).send("Success");
+				} else {
+					return res.status(403).send("Cannot delete property with associated bookings.");
+				}
+			} else {
+				return res.status(401).send("Unauthorized");
+			}
+		}
+		return res.status(404).send("Property not found");
 	} catch (err) {
 		console.log(err);
 	}
