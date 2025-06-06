@@ -12,6 +12,7 @@ import userRouter from "./routes/user.js";
 import hostRouter from "./routes/host.js";
 import propertyRouter from "./routes/property.js";
 import typesRouter from "./routes/types.js";
+import uploadRouter from "./routes/upload.js";
 
 const app = express();
 const port = 3000;
@@ -28,6 +29,8 @@ app.use(
 	})
 );
 
+app.use(express.static("file_storage"));
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -39,6 +42,7 @@ app.use("/user", passport.authenticate('jwt', {session: false}), userRouter);
 app.use("/host", passport.authenticate('jwt', {session: false}), hostRouter);
 app.use("/property", propertyRouter);
 app.use("/types", typesRouter);
+app.use("/upload", passport.authenticate('jwt', {session: false}), uploadRouter);
 
 app.listen(port, () => {
 	console.log(`Backend server running on port ${port}`);
