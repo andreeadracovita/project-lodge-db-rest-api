@@ -25,8 +25,8 @@ const upload = multer({
             cb(null, true);
         } else {
             cb(null, false);
-            const err = new Error('Only .png, .jpg and .jpeg format allowed!')
-            err.name = 'ExtensionError'
+            const err = new Error("Only .png, .jpg and .jpeg format allowed!");
+            err.name = "ExtensionError";
             return cb(err);
         }
     }
