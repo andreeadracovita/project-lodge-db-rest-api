@@ -26,6 +26,60 @@ router.get("/config", async (req, res) => {
 	}
 });
 
+// GET /user/wishlist/property-id/1
+router.get("/wishlist/property-id/:id", async (req, res) => {
+	try {
+		const propertyId = req.params.id;
+		const userId = req.user.id;
+		const result = await db.query("SELECT * FROM wishlist WHERE user_id=$1 AND property_id=$2", [
+			userId, propertyId
+		]);
+		if (result.rows.length > 0) {
+			return res.json({ is_wishlisted: true });
+		}
+		return res.json({ is_wishlisted: false });
+	} catch (error) {
+		console.log(err);
+	}
+});
+
+// POST /user/wishlist/property-id/1
+router.post("/wishlist/toggle/property-id/:id", async (req, res) => {
+	try {
+		const propertyId = req.params.id;
+		const userId = req.user.id;
+		const result = await db.query("SELECT * FROM wishlist WHERE user_id=$1 AND property_id=$2", [
+			userId, propertyId
+		]);
+		if (result.rows.length > 0) {
+			await db.query("DELETE FROM wishlist WHERE user_id=$1 AND property_id=$2", [
+				userId, propertyId
+			]);
+			return res.json({ is_wishlisted: false });
+		} else {
+			const result = await db.query("INSERT INTO wishlist (user_id, property_id) VALUES ($1, $2) RETURNING *", [
+				userId, propertyId
+			]);
+			return res.json({ is_wishlisted: true });
+		}
+	} catch (error) {
+		console.log(err);
+	}
+});
+
+// GET /user/wishlist/all
+router.get("/wishlist/all", async (req, res) => {
+	try {
+		const userId = req.user.id;
+		const result = await db.query("SELECT property_id FROM wishlist WHERE user_id=$1", [
+			userId
+		]);
+		return res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 // PATCH /user
 router.patch("/", (req, res) => {
 	console.log("Patch user with id ", req.user.id);

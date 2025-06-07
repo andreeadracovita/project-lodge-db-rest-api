@@ -70,11 +70,13 @@ router.post("/property-details/new/base", async (req, res) => {
 		const {
 			property_id,
 			street,
-			street_no
+			street_no,
+			building_type_id,
+			rental_type_id
 		} = req.body;
-		const queryParams = "property_id, host_id, street, street_no, created_at";
-		const result = await db.query(`INSERT INTO property_details (${queryParams}) VALUES ($1, $2, $3, $4, $5) RETURNING *;`, [
-			property_id, req.user.id, street, street_no, new Date().toISOString().slice(0, 10)
+		const queryParams = "property_id, host_id, street, street_no, building_type_id, rental_type_id, created_at";
+		const result = await db.query(`INSERT INTO property_details (${queryParams}) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;`, [
+			property_id, req.user.id, street, street_no, building_type_id, rental_type_id, new Date().toISOString().slice(0, 10)
 		]);
 		if (result.rows.length > 0) {
 			res.status(200).send("OK");
