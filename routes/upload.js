@@ -4,12 +4,14 @@ import uniqueFilename from "unique-filename";
 import imageType, { minimumBytes } from "image-type";
 import { readChunk } from "read-chunk";
 
+import { storagePath } from "../constants.js";
+
 const router = express.Router();
 
 // Multer Configuration
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		cb(null, "../file_storage/");
+		cb(null, storagePath);
 	},
 	filename: (req, file, cb) => {
 		cb(null, Date.now() + "-" + uniqueFilename("") + ".jpg");

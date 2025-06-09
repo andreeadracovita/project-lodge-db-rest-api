@@ -1,0 +1,1 @@
+export const storagePath = "../file_storage/";

@@ -1,4 +1,7 @@
 import express from "express";
+import fs from "fs";
+
+import { storagePath } from "../constants.js";
 import db from "../db/db.js";
 
 const router = express.Router();
@@ -176,12 +179,23 @@ router.delete("/property/:id", async (req, res) => {
 		if (result.rows.length === 1) {
 			const hostId = result.rows[0].host_id;
 			if (hostId === req.user.id) {
-				// Check if property_id appears in any bookings
-				// Delete only if bookings
+				// Check if property_id appears in any bookings. Delete only if no bookings.
 				const bookingResult = await db.query("SELECT * FROM bookings WHERE property_id=$1", [id]);
 				if (bookingResult.rows.length === 0) {
 					await db.query("DELETE FROM property_details WHERE property_id=$1", [id]);
 					await db.query("DELETE FROM properties WHERE id=$1", [id]);
+
+					// Delete associated images from storage
+					const imageFileNames = result.rows[0].images_url_array;
+					if (imageFileNames) {
+						for (let fileName of imageFileNames) {
+							const path = storagePath + fileName;
+							fs.unlinkSync(storagePath + fileName);
+						}
+					}
+
+					// TODO: Delete associated entries from wishlist
+
 					return res.status(200).send("Success");
 				} else {
 					return res.status(403).send("Cannot delete property with associated bookings.");

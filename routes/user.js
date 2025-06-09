@@ -21,8 +21,8 @@ router.get("/config", async (req, res) => {
 		} else {
 			return res.status(404).send("User not found");
 		}
-	} catch (error) {
-		console.log(error);
+	} catch (err) {
+		console.log(err);
 	}
 });
 
@@ -38,7 +38,7 @@ router.get("/wishlist/property-id/:id", async (req, res) => {
 			return res.json({ is_wishlisted: true });
 		}
 		return res.json({ is_wishlisted: false });
-	} catch (error) {
+	} catch (err) {
 		console.log(err);
 	}
 });
@@ -62,7 +62,7 @@ router.post("/wishlist/toggle/property-id/:id", async (req, res) => {
 			]);
 			return res.json({ is_wishlisted: true });
 		}
-	} catch (error) {
+	} catch (err) {
 		console.log(err);
 	}
 });
