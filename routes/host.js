@@ -182,6 +182,9 @@ router.delete("/property/:id", async (req, res) => {
 				// Check if property_id appears in any bookings. Delete only if no bookings.
 				const bookingResult = await db.query("SELECT * FROM bookings WHERE property_id=$1", [id]);
 				if (bookingResult.rows.length === 0) {
+					// Delete associated entries from wishlist
+					await db.query("DELETE FROM wishlist WHERE property_id=$1", [id]);
+
 					await db.query("DELETE FROM property_details WHERE property_id=$1", [id]);
 					await db.query("DELETE FROM properties WHERE id=$1", [id]);
 
@@ -193,8 +196,6 @@ router.delete("/property/:id", async (req, res) => {
 							fs.unlinkSync(storagePath + fileName);
 						}
 					}
-
-					// TODO: Delete associated entries from wishlist
 
 					return res.status(200).send("Success");
 				} else {
