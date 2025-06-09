@@ -71,7 +71,14 @@ router.post("/wishlist/toggle/property-id/:id", async (req, res) => {
 router.get("/wishlist/all", async (req, res) => {
 	try {
 		const userId = req.user.id;
-		const result = await db.query("SELECT property_id FROM wishlist WHERE user_id=$1", [
+		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.images_url_array, pd.price_per_night_eur AS price
+			FROM properties AS p
+			JOIN property_details AS pd
+			ON p.id = pd.property_id
+			JOIN wishlist AS w
+			ON p.id = w.property_id
+			WHERE w.user_id=$1 AND p.is_listed = TRUE;`;
+		const result = await db.query(query, [
 			userId
 		]);
 		return res.json(result.rows);

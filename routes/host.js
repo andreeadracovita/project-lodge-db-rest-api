@@ -7,7 +7,10 @@ const router = express.Router();
 router.get("/properties", async (req, res) => {
 	const userId = parseInt(req.user.id);
 	try {
-		const result = await db.query("SELECT p.id, p.title, p.city, p.country, p.is_listed, pd.images_url_array FROM properties AS p, property_details AS pd WHERE p.id = pd.property_id AND pd.host_id = $1", [userId]);
+		const query = `SELECT p.id, p.title, p.city, p.country, p.is_listed, pd.images_url_array
+			FROM properties AS p, property_details AS pd
+			WHERE p.id = pd.property_id AND pd.host_id = $1`;
+		const result = await db.query(query, [userId]);
 		res.json(result.rows);
 	} catch (err) {
 		console.log(err);
@@ -17,7 +20,10 @@ router.get("/properties", async (req, res) => {
 router.post("/properties/new", async (req, res) => {
 	try {
 		const { title, geo, city, country, is_listed } = req.body;
-		const result = await db.query("INSERT INTO properties (title, geo, city, country, is_listed) VALUES ($1, POINT($2, $3), $4, $5, $6) RETURNING id", [
+		const query = `INSERT INTO properties (title, geo, city, country, is_listed)
+			VALUES ($1, POINT($2, $3), $4, $5, $6)
+			RETURNING id`;
+		const result = await db.query(query, [
 			title, geo.x, geo.y, city, country, is_listed
 		]);
 		if (result.rows.length > 0) {
