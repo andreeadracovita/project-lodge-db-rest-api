@@ -1,7 +1,8 @@
+import axios from "axios";
 import express from "express";
 import fs from "fs";
 
-import { storagePath } from "../constants.js";
+import { siteCurrency, storagePath } from "../constants.js";
 import db from "../db/db.js";
 
 const router = express.Router();
@@ -164,7 +165,13 @@ router.patch("/property-details/:id", async (req, res) => {
 			await updatePropertyDetailField(id, "images_url_array", images_url_array);
 		}
 		if (price !== undefined) {
-			await updatePropertyDetailField(id, "price_per_night_eur", price);
+			// Get user currency
+			const apiKey = process.env.FCA_API_KEY;
+			const response = await axios.get(`https://api.freecurrencyapi.com/v1/latest?apikey=${apiKey}&base_currency=${currency}&currencies=${siteCurrency}`);
+			
+			const conversionRate = response.data.data[siteCurrency];
+			const convertedPrice = Math.round(price * conversionRate * 100) / 100;
+			await updatePropertyDetailField(id, "price_per_night_eur", convertedPrice);
 		}
 		if (experiences_ids !== undefined) {
 			await updatePropertyDetailField(id, "experiences_ids", experiences_ids);
