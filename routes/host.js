@@ -155,6 +155,12 @@ router.patch("/property-details/:id", async (req, res) => {
 			await updatePropertyDetailField(id, "rental_type_id", rental_type_id);
 		}
 		if (images_url_array !== undefined) {
+			// Delete previously stored images
+			const result = await db.query("SELECT images_url_array FROM property_details WHERE property_id=$1", [id]);
+			if (result.rows.length > 0) {
+				deletePhotos(result.rows[0].images_url_array);
+			};
+
 			await updatePropertyDetailField(id, "images_url_array", images_url_array);
 		}
 		if (price !== undefined) {
@@ -171,6 +177,15 @@ router.patch("/property-details/:id", async (req, res) => {
 		console.log(err);
 	}
 });
+
+function deletePhotos(fileNameArray) {
+	if (fileNameArray) {
+		for (let fileName of fileNameArray) {
+			const path = storagePath + fileName;
+			fs.unlinkSync(storagePath + fileName);
+		}
+	}
+}
 
 router.delete("/property/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
@@ -189,13 +204,7 @@ router.delete("/property/:id", async (req, res) => {
 					await db.query("DELETE FROM properties WHERE id=$1", [id]);
 
 					// Delete associated images from storage
-					const imageFileNames = result.rows[0].images_url_array;
-					if (imageFileNames) {
-						for (let fileName of imageFileNames) {
-							const path = storagePath + fileName;
-							fs.unlinkSync(storagePath + fileName);
-						}
-					}
+					deletePhotos(result.rows[0].images_url_array);
 
 					return res.status(200).send("Success");
 				} else {
