@@ -8,6 +8,7 @@ import session from "express-session";
 
 import "./passport.js";
 import authRouter from "./routes/auth.js";
+import bookingRouter from "./routes/booking.js";
 import hostRouter from "./routes/host.js";
 import miscRouter from "./routes/misc.js";
 import propertyRouter from "./routes/property.js";
@@ -40,6 +41,7 @@ app.use(bodyParser.json());
 // app.use(passport.session());
 
 app.use("/auth", authRouter);
+app.use("/booking", bookingRouter);
 app.use("/host", passport.authenticate('jwt', {session: false}), hostRouter);
 app.use("/misc", miscRouter);
 app.use("/property", propertyRouter);
