@@ -26,6 +26,17 @@ router.get("/config", async (req, res) => {
 	}
 });
 
+// GET /user/bookings
+router.get("/booking/all", async (req, res) => {
+	try {
+		// Get bookings where user email matches
+		const result = await db.query("SELECT * FROM bookings WHERE email=$1", [req.user.email]);
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 // GET /user/wishlist/property-id/1
 router.get("/wishlist/property-id/:id", async (req, res) => {
 	try {
