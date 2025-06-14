@@ -26,12 +26,48 @@ router.get("/config", async (req, res) => {
 	}
 });
 
+function filterBookings(bookings) {
+	const results = {
+		current: [],
+		upcoming: [],
+		completed: [],
+		cancelled: []
+	};
+
+	if (bookings.length > 0) {
+		const today = new Date();
+
+		// TODO: Do not hard code booking status enum value.
+		results.current = bookings.filter(b =>
+			b.booking_status !== 3 &&
+			today >= new Date(b.check_in) &&
+			today <= new Date(b.check_out)
+		);
+		// TODO: order asc by check_in, in order
+		results.upcoming = bookings.filter(b => b.booking_status !== 3 && today < new Date(b.check_in));
+		// TODO: order desc by check_out, most recent first
+		results.completed = bookings.filter(b => b.booking_status !== 3 && today > new Date(b.check_in));
+		results.cancelled = bookings.filter(b => b.booking_status === 3);
+	}
+
+	return results;
+}
+
 // GET /user/bookings
 router.get("/booking/all", async (req, res) => {
 	try {
 		// Get bookings where user email matches
-		const result = await db.query("SELECT * FROM bookings WHERE email=$1", [req.user.email]);
-		res.json(result.rows);
+		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id, p.title, p.city, p.country, pd.images_url_array
+			FROM bookings AS b
+			JOIN properties AS p
+			ON b.property_id=p.id
+			JOIN property_details AS pd
+			ON b.property_id=pd.property_id
+			WHERE b.email=$1;`
+		const result = await db.query(query, [req.user.email]);
+
+		const response = filterBookings(result.rows);
+		res.json(response);
 	} catch (err) {
 		console.log(err);
 	}
