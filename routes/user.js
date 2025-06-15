@@ -57,7 +57,7 @@ function filterBookings(bookings) {
 router.get("/booking/all", async (req, res) => {
 	try {
 		// Get bookings where user email matches
-		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id, p.title, p.city, p.country, pd.images_url_array
+		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id, b.pin_code, p.title, p.city, p.country, pd.images_url_array
 			FROM bookings AS b
 			JOIN properties AS p
 			ON b.property_id=p.id
@@ -142,6 +142,24 @@ router.patch("/", (req, res) => {
 // DELETE /user
 router.delete("/", (req, res) => {
 	console.log("Delete user with id ", req.user.id);
+});
+
+// GET /user/authorize/booking
+router.get("/authorize/booking", async (req, res) => {
+	const bookingId = req.query.id;
+	if (!bookingId) {
+		res.status(404).message("Missing booking number");
+	}
+
+	try {
+		const result = await db.query("SELECT email FROM bookings WHERE id=$1", [bookingId]);
+		if (result.rows.length > 0 && result.rows[0].email === req.user.email) {
+			return res.json({ authorized: true });
+		}
+		return res.json({ authorized: false });
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 export default router;
