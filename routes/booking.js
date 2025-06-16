@@ -49,10 +49,10 @@ router.post("/new", async (req, res) => {
 				RETURNING id, pin_code`;
 			const result = await db.query(query, [
 				email, property_id, first_name, last_name, address, city, country,
-				phone_number, check_in, check_out, guests, 2, paymentId, pinCode
+				phone_number, new Date(check_in).toISOString().slice(0, 10), new Date(check_out).toISOString().slice(0, 10),
+				guests, 2, paymentId, pinCode
 			]);
 			if (result.rows.length > 0) {
-				console.log("OK");
 				return res.status(200).send(result.rows[0]);
 			}
 		}

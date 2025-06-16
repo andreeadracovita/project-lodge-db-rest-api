@@ -29,4 +29,29 @@ router.get("/id/:id", async (req, res) => {
 	}
 });
 
+/**
+ * GET /property/booked?id=14&date=2025-08-01 (year, month, day)
+ * @query id - property id
+ * @query date - queried date
+ * For the year & month of date attribute, retrieve a list of check-in, check-out ranges
+ * [
+ * 	 { check_in: "...", check_out: "..." },
+ * 	 { check_in: "...", check_out: "..." }
+ * ]
+ */
+router.get("/booked", async (req, res) => {
+	const id = req.query.id;
+	const date = req.query.date;
+	if (!id || !date) {
+		return res.status(400).send("Bad request");
+	}
+	try {
+		// TODO: do not hard code cancelled status
+		const result = await db.query("SELECT check_in, check_out FROM bookings WHERE property_id=$1 AND booking_status_id!=3 AND check_out>$2", [id, new Date()]);
+		return res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 export default router;
