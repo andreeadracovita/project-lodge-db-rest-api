@@ -39,15 +39,15 @@ function filterBookings(bookings) {
 
 		// TODO: Do not hard code booking status enum value.
 		results.current = bookings.filter(b =>
-			b.booking_status !== 3 &&
+			b.booking_status_id !== 3 &&
 			today >= new Date(b.check_in) &&
 			today <= new Date(b.check_out)
 		);
 		// TODO: order asc by check_in, in order
-		results.upcoming = bookings.filter(b => b.booking_status !== 3 && today < new Date(b.check_in));
+		results.upcoming = bookings.filter(b => b.booking_status_id !== 3 && today < new Date(b.check_in));
 		// TODO: order desc by check_out, most recent first
-		results.completed = bookings.filter(b => b.booking_status !== 3 && today > new Date(b.check_in));
-		results.cancelled = bookings.filter(b => b.booking_status === 3);
+		results.completed = bookings.filter(b => b.booking_status_id !== 3 && today > new Date(b.check_out));
+		results.cancelled = bookings.filter(b => b.booking_status_id === 3);
 	}
 
 	return results;

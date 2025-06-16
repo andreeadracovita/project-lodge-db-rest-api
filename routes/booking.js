@@ -97,4 +97,39 @@ router.post("/authorize", async (req, res) => {
 	}
 });
 
+// POST /booking/cancel
+router.post("/cancel", async (req, res) => {
+	const {
+		confirmation_number,
+		pin_code
+	} = req.body;
+	if (confirmation_number && pin_code) {
+		try {
+			// Authorize request first: user knows confirmation number and pin code
+			const result = await db.query("SELECT pin_code, booking_status_id FROM bookings WHERE id=$1", [confirmation_number]);
+			if (result.rows.length > 0) {
+				const today = new Date();
+				const booking = result.rows[0];
+				if (booking.booking_status_id === 3) {
+					return res.status(403).send("Cannot cancel an already cancelled booking.");
+				}
+				// Can cancel only if current or upcoming booking.
+				if (today <= new Date(booking.check_out)) {
+					return res.status(403).send("Cannot cancel a completed booking");
+				}
+				if (pin_code === booking.pin_code) {
+					const result = await db.query("UPDATE bookings SET booking_status_id=3 WHERE id=$1 RETURNING id", [confirmation_number]);
+					if (result.rows.length > 0) {
+						return res.status(200).send("Successfully cancelled a booking.");
+					}
+					return res.status(409).send("Something went wrong. Please try again later.");
+				}
+			}
+			return res.status(401).send("Unauthorized");
+		} catch (err) {
+			console.log(err);
+		}
+	}
+});
+
 export default router;
