@@ -54,4 +54,35 @@ router.get("/booked", async (req, res) => {
 	}
 });
 
+// GET /property/availability?id=14&check_in=2025-08-01&check_out=2025-08-10
+router.get("/availability", async (req, res) => {
+	const id = req.query.id;
+	const checkIn = req.query.check_in;
+	const checkOut = req.query.check_out;
+	if (id && checkIn && checkOut) {
+		try {
+			const query = `SELECT * FROM bookings
+				WHERE property_id=$1 AND (
+					(check_in >= $2 AND check_in < $3) OR
+					(check_out > $2 AND check_out < $3) OR
+					(check_in <= $2 AND check_out >= $3)
+				);`;
+			const result = await db.query(query, [id, checkIn, checkOut]);
+			if (result.rows.length > 0) {
+				return res.json({
+					available: false
+				});
+			} else {
+				return res.json({
+					available: true
+				});
+			}
+		} catch (err) {
+			console.log(err);
+		}
+	} else {
+		return res.status(400).send("Bad request");
+	}
+});
+
 export default router;
