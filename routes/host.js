@@ -122,6 +122,7 @@ router.patch("/property-details/:id", async (req, res) => {
 			rental_type_id,
 			images_url_array,
 			price,
+			currency,
 			experiences_ids,
 			rating
 		} = req.body;
