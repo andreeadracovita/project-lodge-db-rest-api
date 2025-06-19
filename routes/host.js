@@ -7,7 +7,7 @@ import db from "../db/db.js";
 
 const router = express.Router();
 
-// GET /user/properties
+// GET /host/properties
 router.get("/properties", async (req, res) => {
 	const userId = parseInt(req.user.id);
 	try {
@@ -21,6 +21,7 @@ router.get("/properties", async (req, res) => {
 	}
 });
 
+// POST /host/properties/new payload
 router.post("/properties/new", async (req, res) => {
 	try {
 		const { title, geo, city, country, is_listed } = req.body;
@@ -54,6 +55,7 @@ async function updatePropertyField(id, field, value) {
 	}
 }
 
+// PATCH /host/property/:id payload
 router.patch("/property/:id", async (req, res) => {
 	const id = req.params.id;
 	const { title, geo, city, country, is_listed } = req.body;
@@ -75,6 +77,7 @@ router.patch("/property/:id", async (req, res) => {
 	res.status(200).send("OK");
 });
 
+// POST /host/property-details/new/base
 router.post("/property-details/new/base", async (req, res) => {
 	try {
 		const {
@@ -106,6 +109,7 @@ async function updatePropertyDetailField(id, field, value) {
 	}
 }
 
+// PATCH /host/property-details/:id payload
 router.patch("/property-details/:id", async (req, res) => {
 	try {
 		const id = req.params.id;
@@ -186,6 +190,80 @@ router.patch("/property-details/:id", async (req, res) => {
 	}
 });
 
+function getDaysDiff(day1, day2) {
+	// const diffTime = day2 - day1;
+	// return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+	const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+	const utc1 = Date.UTC(day1.getFullYear(), day1.getMonth(), day1.getDate());
+	const utc2 = Date.UTC(day2.getFullYear(), day2.getMonth(), day2.getDate());
+	return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+}
+
+function partitionReservations(reservations) {
+	const arriving = [];
+	const checkingOut = [];
+	const current = [];
+	const upcoming = [];
+
+	const today = new Date();
+	for (let r of reservations) {
+		const checkInDate = new Date(r.check_in);
+		const checkOutDate = new Date(r.check_out);
+		// Skip checked-out bookings
+		if (getDaysDiff(today, checkOutDate) < 0) {
+			console.log(checkOutDate);
+			console.log(getDaysDiff(today, checkOutDate));
+			continue;
+		}
+		const daysUntilCheckIn = getDaysDiff(today, checkInDate);
+		const daysUntilCheckOut = getDaysDiff(today, checkOutDate);
+
+		// Arriving today or tomorrow
+		if (daysUntilCheckIn >= 0 && daysUntilCheckIn <= 1) {
+			arriving.push(r);
+			continue;
+		}
+		// Checking out today or tomorrow
+		if (daysUntilCheckOut >= 0 && daysUntilCheckOut <= 1) {
+			checkingOut.push(r);
+			continue;
+		}
+		// Upcoming
+		if (daysUntilCheckIn > 1) {
+			upcoming.push(r);
+			continue;
+		}
+		// Current
+		if (today > checkInDate && today <= checkOutDate) {
+			current.push(r);
+		}
+	}
+
+	return {
+		arriving,
+		checkingOut,
+		current,
+		upcoming
+	}
+}
+
+// GET /host/reservations/partitioned
+router.get("/reservations/partitioned", async (req, res) => {
+	try {
+		const query = `SELECT * FROM bookings AS b
+			JOIN property_details AS pd
+			ON b.property_id=pd.property_id
+			JOIN properties AS p
+			ON b.property_id=p.id
+			WHERE pd.host_id=$1 AND b.booking_status_id != 3
+			ORDER BY b.check_in`;
+		const result = await db.query(query, [req.user.id]);
+		res.json(partitionReservations(result.rows));
+	} catch(err) {
+		console.log(err);
+	}
+});
+
 function deletePhotos(fileNameArray) {
 	if (fileNameArray) {
 		for (let fileName of fileNameArray) {
@@ -195,6 +273,7 @@ function deletePhotos(fileNameArray) {
 	}
 }
 
+// DELETE /host/property/:id
 router.delete("/property/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
 	try {
