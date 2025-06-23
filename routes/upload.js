@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 		cb(null, storagePath);
 	},
 	filename: (req, file, cb) => {
-		cb(null, Date.now() + "-" + uniqueFilename("") + ".jpg");
+		cb(null, uniqueFilename("") + "-" + Date.now() + ".jpg");
 	}
 });
 
@@ -41,9 +41,9 @@ router.post("/photos", upload.array("photos", 12), function (req, res, next) {
 		return res.status(400).json({ error: "No file uploaded" });
 	}
 	res.json({ message: "File uploaded successfully", filenames: req.files.map(file => file.filename) });
-})
+});
 
-router.post("/", upload.single("file"), (req, res) => {
+router.post("/avatar", upload.single("avatar"), (req, res) => {
 	if (!req.file) {
 		return res.status(400).json({ error: "No file uploaded" });
 	}

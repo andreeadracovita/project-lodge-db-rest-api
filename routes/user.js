@@ -1,7 +1,13 @@
 import express from "express";
+import fs from "fs";
+
+import { storagePath } from "../constants.js";
 import db from "../db/db.js";
 
 const router = express.Router();
+
+const userFields = ["email", "password"];
+const userDetailsFields = ["first_name", "last_name", "img_url", "country_code", "language", "currency", "experiences_ids"];
 
 // GET /user/config
 router.get("/config", async (req, res) => {
@@ -13,6 +19,7 @@ router.get("/config", async (req, res) => {
 			const userDetails = result.rows[0];
 			return res.json({
 				first_name: userDetails.first_name,
+				last_name: userDetails.last_name,
 				img_url: userDetails.img_url,
 				language: userDetails.language,
 				currency: userDetails.currency,
@@ -134,9 +141,58 @@ router.get("/wishlist/all", async (req, res) => {
 	}
 });
 
+async function updateUserField(id, field, value) {
+	try {
+		if (userFields.includes(field)) {
+			const result = await db.query(`UPDATE users SET ${field} = $1 WHERE id = $2`, [
+				value, id
+			]);
+		} else if (userDetailsFields.includes(field)) {
+			const result = await db.query(`UPDATE user_details SET ${field} = $1 WHERE user_id = $2`, [
+				value, id
+			]);
+		}
+	} catch (err) {
+		console.log(err);
+	}
+}
+
 // PATCH /user
-router.patch("/", (req, res) => {
-	console.log("Patch user with id ", req.user.id);
+router.patch("/", async (req, res) => {
+	const id = req.user.id;
+	const { email, password, first_name, last_name, img_url, country_code, language, currency, experiences_ids } = req.body;
+	if (email !== undefined) {
+		await updateUserField(id, "email", email);
+	}
+	if (password !== undefined) {
+		await updateUserField(id, "password", password);
+	}
+	if (first_name !== undefined) {
+		await updateUserField(id, "first_name", first_name);
+	}
+	if (last_name !== undefined) {
+		await updateUserField(id, "last_name", last_name);
+	}
+	if (img_url !== undefined) {
+		// Delete previously stored image
+		const result = await db.query("SELECT img_url FROM user_details WHERE user_id=$1", [id]);
+		if (result.rows.length > 0 && result.rows[0].img_url) {
+			const path = storagePath + result.rows[0].img_url;
+			fs.unlinkSync(path);
+		};
+
+		await updateUserField(id, "img_url", img_url);
+	}
+	if (language !== undefined) {
+		await updateUserField(id, "language", language);
+	}
+	if (currency !== undefined) {
+		await updateUserField(id, "currency", currency);
+	}
+	if (experiences_ids !== undefined) {
+		await updateUserField(id, "experiences_ids", experiences_ids);
+	}
+	res.status(200).send("OK");
 });
 
 // DELETE /user

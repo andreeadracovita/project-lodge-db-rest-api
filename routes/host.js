@@ -267,7 +267,7 @@ router.get("/bookings/calendar/property/:id", async (req, res) => {
 	const property_id = req.params.id;
 	if (property_id) {
 		try {
-			// Order by check-in, range years
+			// TODO: Order by check-in, range years
 			const query = `SELECT * FROM bookings WHERE property_id=$1 AND booking_status_id!=3`;
 			const result = await db.query(query, [property_id]);
 			res.json(result.rows);
@@ -281,7 +281,7 @@ function deletePhotos(fileNameArray) {
 	if (fileNameArray) {
 		for (let fileName of fileNameArray) {
 			const path = storagePath + fileName;
-			fs.unlinkSync(storagePath + fileName);
+			fs.unlinkSync(path);
 		}
 	}
 }
