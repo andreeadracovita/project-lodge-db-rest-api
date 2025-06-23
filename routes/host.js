@@ -211,8 +211,6 @@ function partitionReservations(reservations) {
 		const checkOutDate = new Date(r.check_out);
 		// Skip checked-out bookings
 		if (getDaysDiff(today, checkOutDate) < 0) {
-			console.log(checkOutDate);
-			console.log(getDaysDiff(today, checkOutDate));
 			continue;
 		}
 		const daysUntilCheckIn = getDaysDiff(today, checkInDate);
@@ -247,8 +245,8 @@ function partitionReservations(reservations) {
 	}
 }
 
-// GET /host/reservations/partitioned
-router.get("/reservations/partitioned", async (req, res) => {
+// GET /host/bookings/partitioned
+router.get("/bookings/partitioned", async (req, res) => {
 	try {
 		const query = `SELECT * FROM bookings AS b
 			JOIN property_details AS pd
@@ -261,6 +259,21 @@ router.get("/reservations/partitioned", async (req, res) => {
 		res.json(partitionReservations(result.rows));
 	} catch(err) {
 		console.log(err);
+	}
+});
+
+// GET /host/bookings/calendar/property/1
+router.get("/bookings/calendar/property/:id", async (req, res) => {
+	const property_id = req.params.id;
+	if (property_id) {
+		try {
+			// Order by check-in, range years
+			const query = `SELECT * FROM bookings WHERE property_id=$1 AND booking_status_id!=3`;
+			const result = await db.query(query, [property_id]);
+			res.json(result.rows);
+		} catch (err) {
+			console.log(err);
+		}
 	}
 });
 
