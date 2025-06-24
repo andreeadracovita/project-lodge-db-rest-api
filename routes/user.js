@@ -12,19 +12,18 @@ const userDetailsFields = ["first_name", "last_name", "img_url", "country_code",
 // GET /user/config
 router.get("/config", async (req, res) => {
 	try {
-		const result = await db.query("SELECT * FROM user_details WHERE user_id = $1", [
+		const query = `SELECT u.email, ud.first_name, ud.last_name, ud.country_code, ud.language, ud.currency,
+			ud.experiences_ids, ud.img_url
+			FROM user_details AS ud
+			JOIN users AS u
+				ON ud.user_id=u.id
+			WHERE user_id = $1`;
+		const result = await db.query(query, [
 			req.user.id
 		]);
 		if (result.rows.length > 0) {
 			const userDetails = result.rows[0];
-			return res.json({
-				first_name: userDetails.first_name,
-				last_name: userDetails.last_name,
-				img_url: userDetails.img_url,
-				language: userDetails.language,
-				currency: userDetails.currency,
-				experiences_ids: userDetails.experiences_ids
-			});
+			return res.json(userDetails);
 		} else {
 			return res.status(404).send("User not found");
 		}
@@ -182,6 +181,9 @@ router.patch("/", async (req, res) => {
 		};
 
 		await updateUserField(id, "img_url", img_url);
+	}
+	if (country_code !== undefined) {
+		await updateUserField(id, "country_code", country_code);
 	}
 	if (language !== undefined) {
 		await updateUserField(id, "language", language);
