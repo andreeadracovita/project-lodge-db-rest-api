@@ -143,13 +143,9 @@ router.get("/wishlist/all", async (req, res) => {
 async function updateUserField(id, field, value) {
 	try {
 		if (userFields.includes(field)) {
-			const result = await db.query(`UPDATE users SET ${field} = $1 WHERE id = $2`, [
-				value, id
-			]);
+			await db.query(`UPDATE users SET ${field}=$1 WHERE id=$2`, [value, id]);
 		} else if (userDetailsFields.includes(field)) {
-			const result = await db.query(`UPDATE user_details SET ${field} = $1 WHERE user_id = $2`, [
-				value, id
-			]);
+			await db.query(`UPDATE user_details SET ${field}=$1 WHERE user_id=$2`, [value, id]);
 		}
 	} catch (err) {
 		console.log(err);
@@ -159,12 +155,9 @@ async function updateUserField(id, field, value) {
 // PATCH /user
 router.patch("/", async (req, res) => {
 	const id = req.user.id;
-	const { email, password, first_name, last_name, img_url, country_code, language, currency, experiences_ids } = req.body;
+	const { email, first_name, last_name, img_url, country_code, language, currency, experiences_ids } = req.body;
 	if (email !== undefined) {
 		await updateUserField(id, "email", email);
-	}
-	if (password !== undefined) {
-		await updateUserField(id, "password", password);
 	}
 	if (first_name !== undefined) {
 		await updateUserField(id, "first_name", first_name);
@@ -194,7 +187,22 @@ router.patch("/", async (req, res) => {
 	if (experiences_ids !== undefined) {
 		await updateUserField(id, "experiences_ids", experiences_ids);
 	}
-	res.status(200).send("OK");
+	res.status(200).send("User updated successfully");
+});
+
+router.patch("/password", async (req, res) => {
+	const id = req.user.id;
+	const { old_password, new_password } = req.body;
+	try {
+		const result = await db.query("SELECT password FROM users WHERE id=$1", [id]);
+		if (result.rows.length === 1 && result.rows[0].password === old_password) {
+			await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [new_password, id]);
+			return res.status(200).send("Password changed successfully");
+		}
+		return res.status(401).send("Bad request");
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 // DELETE /user
