@@ -85,4 +85,18 @@ router.get("/availability", async (req, res) => {
 	}
 });
 
+// GET /property/reviews/:id get all reviews for property
+router.get("/reviews/:id", async (req, res) => {
+	const propId = parseInt(req.params.id);
+	if (!propId) {
+		return res.status(400).send("Bad request");
+	}
+	try {
+		const result = await db.query("SELECT * FROM reviews WHERE property_id=$1", [propId]);
+		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 export default router;
