@@ -7,6 +7,23 @@ const router = express.Router();
 async function updatePropertyDetailsRatingAndReview(propId) {
 	// Call ComputeProperty property_details rating and reviews_no for propId
 	console.log("Updating property details...");
+	const query = "SELECT * FROM reviews WHERE property_id=$1";
+	try {
+		const result = await db.query("SELECT rating FROM reviews WHERE property_id=$1", [propId]);
+		if (result.rows.length > 0) {
+			const ratingSum = result.rows.reduce(
+				(accumulator, row) => accumulator + row.rating,
+				0
+			);
+			const reviewsNo = result.rows.length;
+			const ratingAvg = (ratingSum / reviewsNo).toFixed(1);
+			await db.query("UPDATE property_details SET rating=$1, reviews_no=$2 WHERE property_id = $3", [
+				ratingAvg, reviewsNo, propId
+			]);
+		}
+	} catch (err) {
+		console.log(err);
+	}
 }
 
 // POST /review/property/1 { rating: 5, title: "Review title", body: "This is the review" }
