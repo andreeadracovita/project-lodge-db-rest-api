@@ -35,7 +35,13 @@ router.get("/authorize/booking/:id", async (req, res) => {
 		if (result.rows.length === 1) {
 			const booking = result.rows[0];
 			if (booking.email === userEmail && booking.booking_status_id === confirmedId) {
-				return res.status(200).send({ isAuthorized: true, property_id: booking.property_id });
+				// Can review only if did not review already
+				const resultReviews = await db.query("SELECT * FROM reviews WHERE booking_id=$1", [bookingId]);
+				if (resultReviews.rows.length === 0) {
+					return res.status(200).send({ isAuthorized: true, property_id: booking.property_id });
+				}
+				// Review already exists
+				return res.status(401).send({ isAuthorized: false });
 			}
 			return res.status(401).send({ isAuthorized: false });
 		}
@@ -45,22 +51,43 @@ router.get("/authorize/booking/:id", async (req, res) => {
 	}
 });
 
-// POST /review/property/1 { rating: 5, title: "Review title", body: "This is the review" }
-router.post("/property/:id", async (req, res) => {
-	const propId = parseInt(req.params.id);
+// GET /review/exists/user/booking/1
+// Check if a user has reviewed a booking
+router.get("/exists/user/booking/:id", async (req, res) => {
+	const bookingId = parseInt(req.params.id);
+	const userId = req.user.id;
+	if (!bookingId || !userId) {
+		return res.status(400).send("Bad request");
+	}
+
+	try {
+		const result = await db.query("SELECT * FROM reviews WHERE user_id=$1 AND booking_id=$2", [userId, bookingId]);
+		if (result.rows.length > 0) {
+			res.json({ exists: true });
+		} else {
+			res.json({ exists: false });
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+// POST /review/booking/1 { property_id: 1, rating: 5, title: "Review title", body: "This is the review" }
+router.post("/booking/:id", async (req, res) => {
+	const bookingId = parseInt(req.params.id);
 	const userId = parseInt(req.user.id);
-	const { rating, title, body } = req.body;
-	if (!propId || !userId || !rating) {
+	const { property_id, rating, title, body } = req.body;
+	if (!bookingId || !userId || !rating || !property_id) {
 		return res.status(400).send("Bad request");
 	}
 	
 	try {
-		const query = `INSERT INTO reviews (property_id, user_id, title, body, rating, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6)
+		const query = `INSERT INTO reviews (booking_id, property_id, user_id, title, body, rating, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING *`;
-		const result = await db.query(query, [propId, userId, title, body, parseInt(rating), new Date().toISOString().slice(0, 10)]);
+		const result = await db.query(query, [bookingId, property_id, userId, title, body, parseInt(rating), new Date().toISOString().slice(0, 10)]);
 		if (result.rows.length > 0) {
-			await updatePropertyDetailsRatingAndReview(propId);
+			await updatePropertyDetailsRatingAndReview(property_id);
 			res.status(200).send("OK");
 		}
 	} catch (err) {
