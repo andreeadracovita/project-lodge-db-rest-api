@@ -1,19 +1,34 @@
 import express from "express";
 import db from "../db/db.js";
 
+import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
+
 const router = express.Router();
 
-// GET /property/all
+// GET /property/all response price is converted into site currency
 router.get("/all", async (req, res) => {
 	try {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_night AS price
+			pd.price_night AS price, pd.local_currency
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id = pd.property_id
 			WHERE p.is_listed = true`;
 		const result = await db.query(query, []);
-		res.json(result.rows);
+		if (result.rows.length > 0) {
+			const currencies = result.rows.map(row => row.local_currency);
+			processExchangeRates(currencies);
+		}
+		const properties = await Promise.all(
+			result.rows.map(async (row) => {
+				const rate = await fetchExchangeRate(row.local_currency);
+				return {
+					...row,
+					price: row.price / rate
+				}
+			})
+		);
+		res.json(properties);
 	} catch (err) {
 		console.log(err);
 	}
@@ -23,8 +38,17 @@ router.get("/all", async (req, res) => {
 router.get("/id/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
 	try {
-		const result = await db.query("SELECT * FROM properties AS p, property_details AS pd WHERE p.id = $1 AND p.id = pd.property_id", [id]);
-		res.json(result.rows);
+		const query = "SELECT * FROM properties AS p, property_details AS pd WHERE p.id=$1 AND p.id=pd.property_id";
+		const result = await db.query(query, [id]);
+		if (result.rows.length === 1) {
+			const property = result.rows[0];
+			const rate = await fetchExchangeRate(property.local_currency);
+			return res.json({
+				...property,
+				price_night: property.price_night / rate
+			});
+		}
+		return res.json({});
 	} catch (err) {
 		console.log(err);
 	}

@@ -39,3 +39,21 @@ export async function fetchExchangeRate(targetCurrency) {
 	console.log(exchangeRateMap);
 	return rate;
 }
+
+// Add to mapping a list of currencies to be used later
+export async function processExchangeRates(currencies) {
+	// Get exchange rate from site currency to list of currencies
+	const apiKey = process.env.FCA_API_KEY;
+	const response = await axios.get(`https://api.freecurrencyapi.com/v1/latest?apikey=${apiKey}&base_currency=${siteCurrency}&currencies=${currencies.join(",")}`);
+
+	for (let target in response.data.data) {
+		exchangeRateMap.set(
+			target, 
+			{
+				date: (new Date()).toDateString(),
+				rate: response.data.data[target]
+			}
+		);
+	}
+	// Do not return anything
+}
