@@ -1,4 +1,3 @@
-import axios from "axios";
 import express from "express";
 import fs from "fs";
 
@@ -85,11 +84,13 @@ router.post("/property-details/new/base", async (req, res) => {
 			street,
 			street_no,
 			building_type_id,
-			rental_type_id
+			rental_type_id,
+			local_currency
 		} = req.body;
-		const queryParams = "property_id, host_id, street, street_no, building_type_id, rental_type_id, created_at";
-		const result = await db.query(`INSERT INTO property_details (${queryParams}) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;`, [
-			property_id, req.user.id, street, street_no, building_type_id, rental_type_id, new Date().toISOString().slice(0, 10)
+		const queryParams = "property_id, host_id, street, street_no, building_type_id, rental_type_id, created_at, local_currency";
+		const result = await db.query(`INSERT INTO property_details (${queryParams}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;`, [
+			property_id, req.user.id, street, street_no, building_type_id, rental_type_id,
+			new Date().toISOString().slice(0, 10), local_currency
 		]);
 		if (result.rows.length > 0) {
 			res.status(200).send("OK");
@@ -128,7 +129,8 @@ router.patch("/property-details/:id", async (req, res) => {
 			price,
 			currency,
 			experiences_ids,
-			rating
+			rating,
+			local_currency
 		} = req.body;
 		if (street !== undefined) {
 			await updatePropertyDetailField(id, "street", street);
@@ -170,19 +172,16 @@ router.patch("/property-details/:id", async (req, res) => {
 			await updatePropertyDetailField(id, "images_url_array", images_url_array);
 		}
 		if (price !== undefined) {
-			// Get user currency
-			const apiKey = process.env.FCA_API_KEY;
-			const response = await axios.get(`https://api.freecurrencyapi.com/v1/latest?apikey=${apiKey}&base_currency=${currency}&currencies=${siteCurrency}`);
-			
-			const conversionRate = response.data.data[siteCurrency];
-			const convertedPrice = Math.round(price * conversionRate * 100) / 100;
-			await updatePropertyDetailField(id, "price_night", convertedPrice);
+			await updatePropertyDetailField(id, "price_night", price);
 		}
 		if (experiences_ids !== undefined) {
 			await updatePropertyDetailField(id, "experiences_ids", experiences_ids);
 		}
 		if (rating !== undefined) {
 			await updatePropertyDetailField(id, "rating", rating);
+		}
+		if (local_currency !== undefined) {
+			await updatePropertyDetailField(id, "local_currency", local_currency);
 		}
 		res.status(200).send("OK");
 	} catch (err) {
