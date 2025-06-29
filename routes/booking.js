@@ -1,15 +1,16 @@
 import express from "express";
 
 import db from "../db/db.js";
-import { generateCode } from "../utils.js";
+import { getNightsCount, generateCode } from "../utils/utils.js";
 
 const router = express.Router();
 
-async function registerPayment(email, card_number, card_holder, price) {
+async function registerPayment(email, card_number, card_holder, price, local_currency) {
 	try {
-		const query = `INSERT INTO payments (email, card_number, card_holder, payment_date, amount)
-			VALUES ($1, $2, $3, $4, $5) RETURNING id`;
-		const result = await db.query(query, [email, card_number, card_holder, new Date().toISOString(), price]);
+		console.log("Registering payment for", price, local_currency);
+		const query = `INSERT INTO payments (email, card_number, card_holder, payment_date, amount, currency)
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+		const result = await db.query(query, [email, card_number, card_holder, new Date().toISOString(), price, local_currency]);
 		if (result.rows.length === 1) {
 			return result.rows[0].id;
 		}
@@ -36,11 +37,24 @@ router.post("/new", async (req, res) => {
 		guests,
 		booking_status_id,
 		card_number,
-		card_holder,
-		price
+		card_holder
 	} = req.body;
 	try {
-		const paymentId = await registerPayment(email, card_number, card_holder, price);
+		if (!property_id || !check_in || !check_out) {
+			return res.status(400).send("Bad request");
+		}
+		const nightsCount = getNightsCount(new Date(check_in), new Date(check_out));
+
+		const propertyPriceResult = await db.query("SELECT price_night, local_currency FROM property_details WHERE property_id=$1", [property_id]);
+		if (propertyPriceResult.rows.length === 0) {
+			return;
+		}
+
+		const priceNightLocal = propertyPriceResult.rows[0].price_night;
+		const localCurrency = propertyPriceResult.rows[0].local_currency;
+		const priceTotal = nightsCount * priceNightLocal;
+		console.log("Paid price in local currency: ")
+		const paymentId = await registerPayment(email, card_number, card_holder, priceTotal, localCurrency);
 		const pinCode = generateCode();
 		if (paymentId) {
 			const query = `INSERT INTO bookings (email, property_id, first_name, last_name, guest_address, guest_city, guest_country,
