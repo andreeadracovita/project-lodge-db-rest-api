@@ -3,6 +3,7 @@ import fs from "fs";
 
 import { storagePath } from "../constants.js";
 import db from "../db/db.js";
+import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
 
 const router = express.Router();
 
@@ -124,7 +125,8 @@ router.post("/wishlist/toggle/property-id/:id", async (req, res) => {
 router.get("/wishlist/all", async (req, res) => {
 	try {
 		const userId = req.user.id;
-		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.images_url_array, pd.price_night AS price
+		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.images_url_array,
+			pd.price_night AS price_night_local, pd.local_currency
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id = pd.property_id
@@ -134,7 +136,22 @@ router.get("/wishlist/all", async (req, res) => {
 		const result = await db.query(query, [
 			userId
 		]);
-		return res.json(result.rows);
+		if (result.rows.length > 0) {
+			const currencies = result.rows.map(row => row.local_currency);
+			if (currencies.length > 0) {
+				await processExchangeRates(currencies);
+			}
+		}
+		const properties = await Promise.all(
+			result.rows.map(async (row) => {
+				const rate = await fetchExchangeRate(row.local_currency);
+				return {
+					...row,
+					price_night_site: (row.price_night_local / rate).toFixed(2)
+				}
+			})
+		);
+		res.json(properties);
 	} catch (err) {
 		console.log(err);
 	}

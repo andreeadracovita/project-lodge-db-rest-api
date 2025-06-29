@@ -9,7 +9,7 @@ const router = express.Router();
 router.get("/all", async (req, res) => {
 	try {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_night AS price, pd.local_currency
+			pd.price_night AS price_night_local, pd.local_currency
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id = pd.property_id
@@ -17,14 +17,16 @@ router.get("/all", async (req, res) => {
 		const result = await db.query(query, []);
 		if (result.rows.length > 0) {
 			const currencies = result.rows.map(row => row.local_currency);
-			processExchangeRates(currencies);
+			if (currencies.length > 0) {
+				await processExchangeRates(currencies);
+			}
 		}
 		const properties = await Promise.all(
 			result.rows.map(async (row) => {
 				const rate = await fetchExchangeRate(row.local_currency);
 				return {
 					...row,
-					price: row.price / rate
+					price_night_site: (row.price_night_local / rate).toFixed(2)
 				}
 			})
 		);
@@ -38,14 +40,19 @@ router.get("/all", async (req, res) => {
 router.get("/id/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
 	try {
-		const query = "SELECT * FROM properties AS p, property_details AS pd WHERE p.id=$1 AND p.id=pd.property_id";
+		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, p.is_listed,
+			pd.street, pd.street_no, pd.description, pd.guests, pd.beds, pd.bedrooms, pd.bathrooms, pd.features_ids,
+			pd.building_type_id, pd.rental_type_id, pd.images_url_array, pd.price_night AS price_night_local,
+			pd.local_currency, pd.experiences_ids, pd.rating, pd.reviews_no
+			FROM properties AS p, property_details AS pd
+			WHERE p.id=$1 AND p.id=pd.property_id`;
 		const result = await db.query(query, [id]);
 		if (result.rows.length === 1) {
 			const property = result.rows[0];
 			const rate = await fetchExchangeRate(property.local_currency);
 			return res.json({
 				...property,
-				price_night: property.price_night / rate
+				price_night_site: (property.price_night_local / rate).toFixed(2),
 			});
 		}
 		return res.json({});

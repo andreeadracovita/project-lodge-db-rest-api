@@ -10,7 +10,8 @@ const router = express.Router();
 router.get("/properties", async (req, res) => {
 	const userId = parseInt(req.user.id);
 	try {
-		const query = `SELECT p.id, p.title, p.city, p.country, p.is_listed, pd.images_url_array
+		const query = `SELECT p.id, p.title, p.city, p.country, p.is_listed,
+			pd.price_night AS price_night_local, pd.local_currency, pd.images_url_array
 			FROM properties AS p, property_details AS pd
 			WHERE p.id = pd.property_id AND pd.host_id = $1`;
 		const result = await db.query(query, [userId]);
