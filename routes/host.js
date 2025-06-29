@@ -176,7 +176,7 @@ router.patch("/property-details/:id", async (req, res) => {
 			
 			const conversionRate = response.data.data[siteCurrency];
 			const convertedPrice = Math.round(price * conversionRate * 100) / 100;
-			await updatePropertyDetailField(id, "price_per_night_eur", convertedPrice);
+			await updatePropertyDetailField(id, "price_night", convertedPrice);
 		}
 		if (experiences_ids !== undefined) {
 			await updatePropertyDetailField(id, "experiences_ids", experiences_ids);

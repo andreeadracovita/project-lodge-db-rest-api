@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/all", async (req, res) => {
 	try {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_per_night_eur AS price
+			pd.price_night AS price
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id = pd.property_id
