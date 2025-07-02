@@ -94,7 +94,7 @@ router.get("/availability", async (req, res) => {
 	if (id && checkIn && checkOut) {
 		try {
 			const query = `SELECT * FROM bookings
-				WHERE property_id=$1 AND (
+				WHERE property_id=$1 AND booking_status_id != 3 AND (
 					(check_in >= $2 AND check_in < $3) OR
 					(check_out > $2 AND check_out < $3) OR
 					(check_in <= $2 AND check_out >= $3)

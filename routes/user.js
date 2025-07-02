@@ -157,6 +157,14 @@ router.get("/wishlist/all", async (req, res) => {
 	}
 });
 
+async function updateBookingsEmail(oldEmail, newEmail) {
+	try {
+		await db.query(`UPDATE bookings SET email=$1 WHERE email=$2`, [newEmail, oldEmail]);
+	} catch (err) {
+		console.log(err);
+	}
+}
+
 async function updateUserField(id, field, value) {
 	try {
 		if (userFields.includes(field)) {
@@ -174,7 +182,20 @@ router.patch("/", async (req, res) => {
 	const id = req.user.id;
 	const { email, first_name, last_name, img_url, country_code, language, currency, experiences_ids } = req.body;
 	if (email !== undefined) {
-		await updateUserField(id, "email", email);
+		// TODO check if new email is available
+		try {
+			const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
+			if (result.rows.length === 0){
+				// TODO first update bookings
+				const oldEmail = req.user.email;
+				await updateBookingsEmail(oldEmail, email);
+				await updateUserField(id, "email", email);
+			} else {
+				return res.json({ isAvailable: false });
+			}
+		} catch (err) {
+			console.log(err);
+		}	
 	}
 	if (first_name !== undefined) {
 		await updateUserField(id, "first_name", first_name);
