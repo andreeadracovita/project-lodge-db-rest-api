@@ -5,14 +5,11 @@ import env from "dotenv";
 import express from "express";
 import passport from "passport";
 import session from "express-session";
-import { Server } from "socket.io";
-import http from "http";
 
 import "./passport.js";
 import authRouter from "./routes/auth.js";
 import bookingRouter from "./routes/booking.js";
 import hostRouter from "./routes/host.js";
-import messageRouter from "./routes/message.js";
 import miscRouter from "./routes/misc.js";
 import propertyRouter from "./routes/property.js";
 import reviewRouter from "./routes/review.js";
@@ -22,15 +19,6 @@ import userRouter from "./routes/user.js";
 
 const app = express();
 const port = 3000;
-const server = app.listen(port, () => {
-	console.log(`Backend server running on port ${port}`);
-});
-const io = new Server(server, {
-	cors: {
-		origin: "http://localhost:5173",
-		methods: ["GET", "POST"]
-	}
-});
 // const saltRounds = 10;
 env.config();
 
@@ -55,7 +43,6 @@ app.use(bodyParser.json());
 app.use("/auth", authRouter);
 app.use("/booking", bookingRouter);
 app.use("/host", passport.authenticate('jwt', {session: false}), hostRouter);
-app.use("/message", messageRouter); // passport.authenticate('jwt', {session: false}), 
 app.use("/misc", miscRouter);
 app.use("/property", propertyRouter);
 app.use("/review", passport.authenticate('jwt', {session: false}), reviewRouter);
@@ -63,11 +50,6 @@ app.use("/types", typesRouter);
 app.use("/upload", passport.authenticate('jwt', {session: false}), uploadRouter);
 app.use("/user", passport.authenticate('jwt', {session: false}), userRouter);
 
-io.on("connection", (socket) => {
-	socket.on("message", (message) => {
-		console.log("Message:", message);
-		io.emit("message", message);
-	});
-	socket.on("disconnect", () => {
-	});
+app.listen(port, () => {
+	console.log(`Backend server running on port ${port}`);
 });
