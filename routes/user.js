@@ -64,7 +64,8 @@ function filterBookings(bookings) {
 router.get("/booking/all", async (req, res) => {
 	try {
 		// Get bookings where user email matches
-		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id, b.pin_code, p.title, p.city, p.country, pd.images_url_array
+		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id,
+			b.pin_code, p.title, p.city, p.country, p.geo, pd.images_url_array, pd.street, pd.street_no
 			FROM bookings AS b
 			JOIN properties AS p
 			ON b.property_id=p.id

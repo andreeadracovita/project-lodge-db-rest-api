@@ -19,9 +19,7 @@ router.post("/new", async (req, res) => {
 		check_in,
 		check_out,
 		guests,
-		booking_status_id,
-		card_number,
-		card_holder
+		booking_status_id
 	} = req.body;
 	try {
 		if (!property_id || !check_in || !check_out) {
@@ -41,7 +39,7 @@ router.post("/new", async (req, res) => {
 
 		const query = `INSERT INTO bookings (email, property_id, first_name, last_name, guest_address, guest_city, guest_country,
 			guest_phone_no, check_in, check_out, guests, booking_status_id, pin_code, amount, currency)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 			RETURNING id, pin_code`;
 		const result = await db.query(query, [
 			email, property_id, first_name, last_name, address, city, country,
@@ -62,7 +60,14 @@ router.get("/", async (req, res) => {
 	const pinCode = req.query.pin;
 	if (bookingId && pinCode) {
 		try {
-			const result = await db.query("SELECT * FROM bookings WHERE id=$1", [bookingId]);
+			const query = `SELECT b.*, u.email AS host_email
+				FROM bookings AS b
+				JOIN property_details AS pd
+				ON b.property_id=pd.property_id
+				JOIN users AS u
+				ON u.id=pd.host_id
+				WHERE b.id=$1`;
+			const result = await db.query(query, [bookingId]);
 			if (result.rows.length > 0 && result.rows[0].pin_code === pinCode) {
 				return res.json(result.rows[0]);
 			}
