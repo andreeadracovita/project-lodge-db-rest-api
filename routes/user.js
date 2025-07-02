@@ -33,7 +33,7 @@ router.get("/config", async (req, res) => {
 	}
 });
 
-function filterBookings(bookings) {
+async function filterBookings(bookings) {
 	const results = {
 		current: [],
 		upcoming: [],
@@ -44,17 +44,22 @@ function filterBookings(bookings) {
 	if (bookings.length > 0) {
 		const today = new Date();
 
-		// TODO: Do not hard code booking status enum value.
-		results.current = bookings.filter(b =>
-			b.booking_status_id !== 3 &&
-			today >= new Date(b.check_in) &&
-			today <= new Date(b.check_out)
-		);
-		// TODO: order asc by check_in, in order
-		results.upcoming = bookings.filter(b => b.booking_status_id !== 3 && today < new Date(b.check_in));
-		// TODO: order desc by check_out, most recent first
-		results.completed = bookings.filter(b => b.booking_status_id !== 3 && today > new Date(b.check_out));
-		results.cancelled = bookings.filter(b => b.booking_status_id === 3);
+		results.current = bookings
+			.filter(b =>
+				b.booking_status !== "cancelled" &&
+				today >= new Date(b.check_in) &&
+				today <= new Date(b.check_out)
+			)
+			.sort((a, b) => new Date(a.check_in) - new Date(b.check_in));
+
+		results.upcoming = bookings
+			.filter(b => b.booking_status !== "cancelled" && today < new Date(b.check_in))
+			.sort((a, b) => new Date(a.check_in) - new Date(b.check_in));
+
+		results.completed = bookings
+			.filter(b => b.booking_status !== "cancelled" && today > new Date(b.check_out))
+			.sort((a, b) => new Date(b.check_out) - new Date(a.check_out));
+		results.cancelled = bookings.filter(b => b.booking_status === "cancelled");
 	}
 
 	return results;
@@ -65,16 +70,19 @@ router.get("/booking/all", async (req, res) => {
 	try {
 		// Get bookings where user email matches
 		const query = `SELECT b.id AS booking_id, b.property_id, b.check_in, b.check_out, b.booking_status_id,
-			b.pin_code, p.title, p.city, p.country, p.geo, pd.images_url_array, pd.street, pd.street_no
+			b.pin_code, p.title, p.city, p.country, p.geo, pd.images_url_array, pd.street, pd.street_no,
+			bs.name AS booking_status
 			FROM bookings AS b
 			JOIN properties AS p
 			ON b.property_id=p.id
 			JOIN property_details AS pd
 			ON b.property_id=pd.property_id
+			JOIN booking_status AS bs
+			ON bs.id=b.booking_status_id
 			WHERE b.email=$1;`
 		const result = await db.query(query, [req.user.email]);
 
-		const response = filterBookings(result.rows);
+		const response = await filterBookings(result.rows);
 		res.json(response);
 	} catch (err) {
 		console.log(err);

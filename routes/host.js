@@ -199,7 +199,7 @@ function getDaysDiff(day1, day2) {
 	return Math.floor((utc2 - utc1) / _MS_PER_DAY);
 }
 
-function partitionReservations(reservations) {
+function partitionBookings(reservations) {
 	const arriving = [];
 	const checkingOut = [];
 	const current = [];
@@ -248,7 +248,8 @@ function partitionReservations(reservations) {
 // GET /host/bookings/partitioned
 router.get("/bookings/partitioned", async (req, res) => {
 	try {
-		const query = `SELECT * FROM bookings AS b
+		const query = `SELECT b.id, b.first_name, b.last_name, b.guests, b.check_in, b.check_out, b.pin_code, p.title
+			FROM bookings AS b
 			JOIN property_details AS pd
 			ON b.property_id=pd.property_id
 			JOIN properties AS p
@@ -256,7 +257,7 @@ router.get("/bookings/partitioned", async (req, res) => {
 			WHERE pd.host_id=$1 AND b.booking_status_id != 3
 			ORDER BY b.check_in`;
 		const result = await db.query(query, [req.user.id]);
-		res.json(partitionReservations(result.rows));
+		res.json(partitionBookings(result.rows));
 	} catch(err) {
 		console.log(err);
 	}

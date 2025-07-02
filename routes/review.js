@@ -1,7 +1,6 @@
 import express from "express";
 
 import db from "../db/db.js";
-import { getCompletedBookingStatusId } from "../utils/utils.js";
 
 const router = express.Router();
 
@@ -21,20 +20,23 @@ router.get("/all", async (req, res) => {
 
 // GET /review/authorize/booking/1
 router.get("/authorize/booking/:id", async (req, res) => {
-	// User is authorized to review a property of he has completed the booking.
+	// User is authorized to review a property if he has completed the booking.
 	const bookingId = parseInt(req.params.id);
 	const userEmail = req.user.email;
 	if (!bookingId || !userEmail) {
 		return res.status(400).send("Bad request");
 	}
 
-	let confirmedId = 0;
 	try {
-		confirmedId = await getCompletedBookingStatusId();
-		const result = await db.query("SELECT * FROM bookings WHERE id=$1", [bookingId]);
+		const query = `SELECT b.*, bs.name AS booking_status
+			FROM bookings AS b
+			JOIN booking_status AS bs
+			ON bs.id=b.booking_status_id
+			WHERE b.id=$1`;
+		const result = await db.query(query, [bookingId]);
 		if (result.rows.length === 1) {
 			const booking = result.rows[0];
-			if (booking.email === userEmail && booking.booking_status_id === confirmedId) {
+			if (booking.email === userEmail && booking.booking_status === "confirmed") {
 				// Can review only if did not review already
 				const resultReviews = await db.query("SELECT * FROM reviews WHERE booking_id=$1", [bookingId]);
 				if (resultReviews.rows.length === 0) {
@@ -51,17 +53,16 @@ router.get("/authorize/booking/:id", async (req, res) => {
 	}
 });
 
-// GET /review/exists/user/booking/1
-// Check if a user has reviewed a booking
-router.get("/exists/user/booking/:id", async (req, res) => {
+// GET /review/exists/booking/1
+// Check if a booking was reviewed
+router.get("/exists/booking/:id", async (req, res) => {
 	const bookingId = parseInt(req.params.id);
-	const userId = req.user.id;
-	if (!bookingId || !userId) {
+	if (!bookingId) {
 		return res.status(400).send("Bad request");
 	}
 
 	try {
-		const result = await db.query("SELECT * FROM reviews WHERE user_id=$1 AND booking_id=$2", [userId, bookingId]);
+		const result = await db.query("SELECT * FROM reviews WHERE booking_id=$1", [bookingId]);
 		if (result.rows.length > 0) {
 			res.json({ exists: true });
 		} else {

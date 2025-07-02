@@ -60,12 +60,14 @@ router.get("/", async (req, res) => {
 	const pinCode = req.query.pin;
 	if (bookingId && pinCode) {
 		try {
-			const query = `SELECT b.*, u.email AS host_email
+			const query = `SELECT b.*, u.email AS host_email, bs.name AS booking_status
 				FROM bookings AS b
 				JOIN property_details AS pd
 				ON b.property_id=pd.property_id
 				JOIN users AS u
 				ON u.id=pd.host_id
+				JOIN booking_status AS bs
+				ON b.booking_status_id=bs.id
 				WHERE b.id=$1`;
 			const result = await db.query(query, [bookingId]);
 			if (result.rows.length > 0 && result.rows[0].pin_code === pinCode) {
