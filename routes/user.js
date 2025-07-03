@@ -4,6 +4,7 @@ import fs from "fs";
 import { storagePath } from "../constants.js";
 import db from "../db/db.js";
 import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
+import { validateEmail, validatePassword } from "../utils/utils.js";
 
 const router = express.Router();
 
@@ -191,25 +192,35 @@ router.patch("/", async (req, res) => {
 	const id = req.user.id;
 	const { email, first_name, last_name, img_url, country_code, language, currency, experiences_ids } = req.body;
 	if (email !== undefined) {
-		// TODO check if new email is available
+		if (email === "") {
+			return res.json({ errors: ["Email field cannot be empty"]});
+		}
+		if (validateEmail(email) === false) {
+			return res.json({ errors: ["Input is not an email"]});
+		}
 		try {
 			const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
 			if (result.rows.length === 0){
-				// TODO first update bookings
 				const oldEmail = req.user.email;
 				await updateBookingsEmail(oldEmail, email);
 				await updateUserField(id, "email", email);
 			} else {
-				return res.json({ isAvailable: false });
+				return res.json({ errors: ["Email is already associated with an account"] });
 			}
 		} catch (err) {
 			console.log(err);
 		}	
 	}
 	if (first_name !== undefined) {
+		if (first_name === "") {
+			return res.json({ errors: ["First name field cannot be empty"]});
+		}
 		await updateUserField(id, "first_name", first_name);
 	}
 	if (last_name !== undefined) {
+		if (last_name === "") {
+			return res.json({ errors: ["Last name field cannot be empty"]});
+		}
 		await updateUserField(id, "last_name", last_name);
 	}
 	if (img_url !== undefined) {
@@ -223,12 +234,21 @@ router.patch("/", async (req, res) => {
 		await updateUserField(id, "img_url", img_url);
 	}
 	if (country_code !== undefined) {
+		if (country_code === "") {
+			return res.json({ errors: ["Country field cannot be empty"]});
+		}
 		await updateUserField(id, "country_code", country_code);
 	}
 	if (language !== undefined) {
+		if (language === "") {
+			return res.json({ errors: ["Language field cannot be empty"]});
+		}
 		await updateUserField(id, "language", language);
 	}
 	if (currency !== undefined) {
+		if (currency === "") {
+			return res.json({ errors: ["Currency field cannot be empty"]});
+		}
 		await updateUserField(id, "currency", currency);
 	}
 	if (experiences_ids !== undefined) {
@@ -237,12 +257,22 @@ router.patch("/", async (req, res) => {
 	res.status(200).send("User updated successfully");
 });
 
+// PATCH /user/password
 router.patch("/password", async (req, res) => {
 	const id = req.user.id;
 	const { old_password, new_password } = req.body;
+	if (!old_password || !new_password) {
+		return res.json({ errors: ["Fields cannot be empty"] });
+	}
+	if (old_password === new_password) {
+		return res.json({ errors: ["Old and new passwords cannot be the same"] });
+	}
 	try {
 		const result = await db.query("SELECT password FROM users WHERE id=$1", [id]);
-		if (result.rows.length === 1 && result.rows[0].password === old_password) {
+		if (result.rows.length === 1) {
+			if (result.rows[0].password !== old_password) {
+				return res.json({ errors: ["Old password does not match"] });
+			}
 			await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [new_password, id]);
 			return res.status(200).send("Password changed successfully");
 		}
