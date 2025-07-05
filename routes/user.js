@@ -195,6 +195,11 @@ router.patch("/", async (req, res) => {
 		if (email === "") {
 			return res.json({ errors: ["Email field cannot be empty"]});
 		}
+
+		if (email.length > 50) {
+			return res.json({ errors: ["Email must exceeds 50 characters"]});
+		}
+
 		if (validateEmail(email) === false) {
 			return res.json({ errors: ["Input is not an email"]});
 		}
@@ -215,11 +220,17 @@ router.patch("/", async (req, res) => {
 		if (first_name === "") {
 			return res.json({ errors: ["First name field cannot be empty"]});
 		}
+		if (first_name.length > 50) {
+			return res.json({ errors: ["First name exceeds 50 characters"]});
+		}
 		await updateUserField(id, "first_name", first_name);
 	}
 	if (last_name !== undefined) {
 		if (last_name === "") {
 			return res.json({ errors: ["Last name field cannot be empty"]});
+		}
+		if (last_name.length > 50) {
+			return res.json({ errors: ["Last name exceeds 50 characters"]});
 		}
 		await updateUserField(id, "last_name", last_name);
 	}
@@ -237,17 +248,26 @@ router.patch("/", async (req, res) => {
 		if (country_code === "") {
 			return res.json({ errors: ["Country field cannot be empty"]});
 		}
+		if (country_code.length > 2) {
+			return res.json({ errors: ["Country code exceeds 2 characters"]});
+		}
 		await updateUserField(id, "country_code", country_code);
 	}
 	if (language !== undefined) {
 		if (language === "") {
 			return res.json({ errors: ["Language field cannot be empty"]});
 		}
+		if (language.length > 5) {
+			return res.json({ errors: ["Language exceeds 5 characters"]});
+		}
 		await updateUserField(id, "language", language);
 	}
 	if (currency !== undefined) {
 		if (currency === "") {
 			return res.json({ errors: ["Currency field cannot be empty"]});
+		}
+		if (currency.length > 5) {
+			return res.json({ errors: ["Currency exceeds 3 characters"]});
 		}
 		await updateUserField(id, "currency", currency);
 	}
@@ -264,6 +284,10 @@ router.patch("/password", async (req, res) => {
 	if (!old_password || !new_password) {
 		return res.json({ errors: ["Fields cannot be empty"] });
 	}
+	if (new_password.length > 50) {
+		return res.json({ errors: ["Password exceeds 50 characters"]});
+	}
+
 	if (old_password === new_password) {
 		return res.json({ errors: ["Old and new passwords cannot be the same"] });
 	}

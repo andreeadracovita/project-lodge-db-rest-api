@@ -21,18 +21,69 @@ router.get("/properties", async (req, res) => {
 	}
 });
 
-// POST /host/properties/new payload
-router.post("/properties/new", async (req, res) => {
+// POST /host/properties/new payload={ field1: val1, ...}
+router.post("/property/new", async (req, res) => {
+	const {
+		title,
+		geo,
+		city,
+		country,
+		street,
+		street_no,
+		building_type_id,
+		rental_type_id,
+		local_currency
+	} = req.body;
+
+	if (!title || !city || !country || !street || !street_no || !building_type_id || !rental_type_id || !local_currency) {
+		return res.status(400).send("Bad request");
+	}
+	if (title === "" || city === "" || country === "" || street === "" || street_no === "" || building_type_id === "" ||
+		rental_type_id === "" || local_currency === "") {
+		return res.json({ errors: ["Fill in all mandatory fields (marked with *)"]});
+	}
+	if (geo === []) {
+		return res.json({ errors: ["No geolocation identified"]});
+	}
+	if (title.length > 50) {
+		return res.json({ errors: ["Title exceeds 50 characters"]});
+	}
+	if (city.length > 50) {
+		return res.json({ errors: ["City exceeds 50 characters"]});
+	}
+	if (country.length > 2) {
+		return res.json({ errors: ["Country code exceeds 2 characters"]});
+	}
+	if (street.length > 50) {
+		return res.json({ errors: ["Street exceeds 50 characters"]});
+	}
+	if (street_no.length > 50) {
+		return res.json({ errors: ["Street number exceeds 10 characters"]});
+	}
+	if (local_currency > 3) {
+		return res.json({ errors: ["Currency exceeds 3 characters"]});
+	}
+
 	try {
-		const { title, geo, city, country, is_listed } = req.body;
-		const query = `INSERT INTO properties (title, geo, city, country, is_listed)
+		const propQuery = `INSERT INTO properties (title, geo, city, country, is_listed)
 			VALUES ($1, POINT($2, $3), $4, $5, $6)
 			RETURNING id`;
-		const result = await db.query(query, [
-			title, geo.x, geo.y, city, country, is_listed
+		const propResult = await db.query(propQuery, [
+			title, geo.x, geo.y, city, country, false
 		]);
-		if (result.rows.length > 0) {
-			res.status(200).send(result.rows[0]);
+		if (propResult.rows.length > 0) {
+			const propId = propResult.rows[0].id;
+			const propDetailQuery = `INSERT INTO property_details 
+				(property_id, host_id, street, street_no, building_type_id, rental_type_id, created_at, local_currency)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+				RETURNING *;`
+			const propDetailsResult = await db.query(propDetailQuery, [
+				propId, req.user.id, street, street_no, building_type_id, rental_type_id,
+				new Date().toISOString().slice(0, 10), local_currency
+			]);
+			if (propDetailsResult.rows.length > 0) {
+				res.status(200).send(propResult.rows[0]);
+			}
 		}
 	} catch (err) {
 		console.log(err);
@@ -55,52 +106,6 @@ async function updatePropertyField(id, field, value) {
 	}
 }
 
-// PATCH /host/property/:id payload
-router.patch("/property/:id", async (req, res) => {
-	const id = req.params.id;
-	const { title, geo, city, country, is_listed } = req.body;
-	if (title !== undefined) {
-		await updatePropertyField(id, "title", title);
-	}
-	if (geo !== undefined) {
-		await updatePropertyField(id, "geo", geo);
-	}
-	if (city !== undefined) {
-		await updatePropertyField(id, "city", city);
-	}
-	if (country !== undefined) {
-		await updatePropertyField(id, "country", country);
-	}
-	if (is_listed !== undefined) {
-		await updatePropertyField(id, "is_listed", is_listed);
-	}
-	res.status(200).send("OK");
-});
-
-// POST /host/property-details/new/base
-router.post("/property-details/new/base", async (req, res) => {
-	try {
-		const {
-			property_id,
-			street,
-			street_no,
-			building_type_id,
-			rental_type_id,
-			local_currency
-		} = req.body;
-		const queryParams = "property_id, host_id, street, street_no, building_type_id, rental_type_id, created_at, local_currency";
-		const result = await db.query(`INSERT INTO property_details (${queryParams}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;`, [
-			property_id, req.user.id, street, street_no, building_type_id, rental_type_id,
-			new Date().toISOString().slice(0, 10), local_currency
-		]);
-		if (result.rows.length > 0) {
-			res.status(200).send("OK");
-		}
-	} catch (err) {
-		console.log(err);
-	}
-});
-
 async function updatePropertyDetailField(id, field, value) {
 	try {
 		const result = await db.query(`UPDATE property_details SET ${field} = $1 WHERE property_id = $2`, [
@@ -111,83 +116,134 @@ async function updatePropertyDetailField(id, field, value) {
 	}
 }
 
-// PATCH /host/property-details/:id payload
-router.patch("/property-details/:id", async (req, res) => {
-	try {
-		const id = req.params.id;
-		const {
-			street,
-			street_no,
-			description,
-			guests,
-			beds,
-			bedrooms,
-			bathrooms,
-			features_ids,
-			building_type_id,
-			rental_type_id,
-			images_url_array,
-			price,
-			currency,
-			experiences_ids,
-			rating,
-			local_currency
-		} = req.body;
-		if (street !== undefined) {
-			await updatePropertyDetailField(id, "street", street);
+// PATCH /host/property/1 payload={ field1: val1, ...}
+router.patch("/property/:id", async (req, res) => {
+	const id = req.params.id;
+	const {
+		title,
+		geo,
+		city,
+		country,
+		street,
+		street_no,
+		description,
+		guests,
+		beds,
+		bedrooms,
+		bathrooms,
+		features_ids,
+		building_type_id,
+		rental_type_id,
+		images_url_array,
+		price,
+		currency,
+		experiences_ids,
+		rating,
+		local_currency
+	} = req.body;
+	if (title !== undefined) {
+		if (title === "") {
+			return res.json({ errors: ["Title field cannot be empty"]});
 		}
-		if (street_no !== undefined) {
-			await updatePropertyDetailField(id, "street_no", street_no);
+		if (title.length > 50) {
+			return res.json({ errors: ["Title exceeds 50 characters"]});
 		}
-		if (description !== undefined) {
-			await updatePropertyDetailField(id, "description", description);
-		}
-		if (guests !== undefined) {
-			await updatePropertyDetailField(id, "guests", guests);
-		}
-		if (beds !== undefined) {
-			await updatePropertyDetailField(id, "beds", beds);
-		}
-		if (bedrooms !== undefined) {
-			await updatePropertyDetailField(id, "bedrooms", bedrooms);
-		}
-		if (bathrooms !== undefined) {
-			await updatePropertyDetailField(id, "bathrooms", bathrooms);
-		}
-		if (features_ids !== undefined) {
-			await updatePropertyDetailField(id, "features_ids", features_ids);
-		}
-		if (building_type_id !== undefined) {
-			await updatePropertyDetailField(id, "building_type_id", building_type_id);
-		}
-		if (rental_type_id !== undefined) {
-			await updatePropertyDetailField(id, "rental_type_id", rental_type_id);
-		}
-		if (images_url_array !== undefined) {
-			// Delete previously stored images
-			const result = await db.query("SELECT images_url_array FROM property_details WHERE property_id=$1", [id]);
-			if (result.rows.length > 0) {
-				deletePhotos(result.rows[0].images_url_array);
-			};
-
-			await updatePropertyDetailField(id, "images_url_array", images_url_array);
-		}
-		if (price !== undefined) {
-			await updatePropertyDetailField(id, "price_night", price);
-		}
-		if (experiences_ids !== undefined) {
-			await updatePropertyDetailField(id, "experiences_ids", experiences_ids);
-		}
-		if (rating !== undefined) {
-			await updatePropertyDetailField(id, "rating", rating);
-		}
-		if (local_currency !== undefined) {
-			await updatePropertyDetailField(id, "local_currency", local_currency);
-		}
-		res.status(200).send("OK");
-	} catch (err) {
-		console.log(err);
+		await updatePropertyField(id, "title", title);
 	}
+	if (geo !== undefined) {
+		await updatePropertyField(id, "geo", geo);
+	}
+	if (city !== undefined) {
+		if (city === "") {
+			return res.json({ errors: ["City field cannot be empty"]});
+		}
+		if (city.length > 50) {
+			return res.json({ errors: ["City exceeds 50 characters"]});
+		}
+		await updatePropertyField(id, "city", city);
+	}
+	if (country !== undefined) {
+		if (country === "") {
+			return res.json({ errors: ["Country field cannot be empty"]});
+		}
+		if (country.length > 2) {
+			return res.json({ errors: ["Country code exceeds 2 characters"]});
+		}
+		await updatePropertyField(id, "country", country);
+	}
+	if (is_listed !== undefined) {
+		await updatePropertyField(id, "is_listed", is_listed);
+	}
+	if (street !== undefined) {
+		if (street === "") {
+			return res.json({ errors: ["Street field cannot be empty"]});
+		}
+		if (street.length > 50) {
+			return res.json({ errors: ["Street exceeds 50 characters"]});
+		}
+		await updatePropertyDetailField(id, "street", street);
+	}
+	if (street_no !== undefined) {
+		if (street_no === "") {
+			return res.json({ errors: ["Street number field cannot be empty"]});
+		}
+		if (street_no.length > 50) {
+			return res.json({ errors: ["Street number exceeds 50 characters"]});
+		}
+		await updatePropertyDetailField(id, "street_no", street_no);
+	}
+	if (description !== undefined) {
+		await updatePropertyDetailField(id, "description", description);
+	}
+	if (guests !== undefined) {
+		await updatePropertyDetailField(id, "guests", guests);
+	}
+	if (beds !== undefined) {
+		await updatePropertyDetailField(id, "beds", beds);
+	}
+	if (bedrooms !== undefined) {
+		await updatePropertyDetailField(id, "bedrooms", bedrooms);
+	}
+	if (bathrooms !== undefined) {
+		await updatePropertyDetailField(id, "bathrooms", bathrooms);
+	}
+	if (features_ids !== undefined) {
+		await updatePropertyDetailField(id, "features_ids", features_ids);
+	}
+	if (building_type_id !== undefined) {
+		await updatePropertyDetailField(id, "building_type_id", building_type_id);
+	}
+	if (rental_type_id !== undefined) {
+		await updatePropertyDetailField(id, "rental_type_id", rental_type_id);
+	}
+	if (images_url_array !== undefined) {
+		// Delete previously stored images
+		const result = await db.query("SELECT images_url_array FROM property_details WHERE property_id=$1", [id]);
+		if (result.rows.length > 0) {
+			deletePhotos(result.rows[0].images_url_array);
+		};
+
+		await updatePropertyDetailField(id, "images_url_array", images_url_array);
+	}
+	if (price !== undefined) {
+		await updatePropertyDetailField(id, "price_night", price);
+	}
+	if (experiences_ids !== undefined) {
+		await updatePropertyDetailField(id, "experiences_ids", experiences_ids);
+	}
+	if (rating !== undefined) {
+		await updatePropertyDetailField(id, "rating", rating);
+	}
+	if (local_currency !== undefined) {
+		if (local_currency === "") {
+			return res.json({ errors: ["Currency field cannot be empty"]});
+		}
+		if (local_currency.length > 3) {
+			return res.json({ errors: ["Currency exceeds 3 characters"]});
+		}
+		await updatePropertyDetailField(id, "local_currency", local_currency);
+	}
+	res.status(200).send("OK");
 });
 
 function getDaysDiff(day1, day2) {
@@ -286,7 +342,7 @@ function deletePhotos(fileNameArray) {
 	}
 }
 
-// DELETE /host/property/:id
+// DELETE /host/property/1
 router.delete("/property/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
 	try {

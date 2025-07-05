@@ -22,18 +22,44 @@ router.post("/new", async (req, res) => {
 		booking_status_id
 	} = req.body;
 	try {
-		if (!property_id || !check_in || !check_out) {
+		// Front end must send those fields even if empty
+		if (!property_id || !check_in || !check_out || !email || !first_name || !last_name || !address || !city ||
+			!country || country.length > 2 || !phone_number) {
 			return res.status(400).send("Bad request");
 		}
-		const nightsCount = getNightsCount(new Date(check_in), new Date(check_out));
+		// User must complete mandatory fields
+		if (email === "" || first_name === "" || last_name === "" || address === "" || city === "" || country === "" ||
+			phone_number === "") {
+			return res.json({ errors: ["Fill in all mandatory fields (marked with *)"]});
+		}
+		if (email.length > 50) {
+			return res.json({ errors: ["Email exceeds 50 characters"]});
+		}
+		if (first_name.length > 50) {
+			return res.json({ errors: ["First name exceeds 50 characters"]});
+		}
+		if (last_name.length > 50) {
+			return res.json({ errors: ["Last name exceeds 50 characters"]});
+		}
+		if (address.length > 50) {
+			return res.json({ errors: ["Address exceeds 50 characters"]});
+		}
+		if (city.length > 50) {
+			return res.json({ errors: ["City exceeds 50 characters"]});
+		}
+		if (phone_number.length > 50) {
+			return res.json({ errors: ["Phone number exceeds 50 characters"]});
+		}
 
-		const propertyPriceResult = await db.query("SELECT price_night, local_currency FROM property_details WHERE property_id=$1", [property_id]);
+		const priceQuery = `SELECT price_night, local_currency FROM property_details WHERE property_id=$1`;
+		const propertyPriceResult = await db.query(priceQuery, [property_id]);
 		if (propertyPriceResult.rows.length === 0) {
 			return;
 		}
 
 		const priceNightLocal = propertyPriceResult.rows[0].price_night;
 		const localCurrency = propertyPriceResult.rows[0].local_currency;
+		const nightsCount = getNightsCount(new Date(check_in), new Date(check_out));
 		const priceTotal = nightsCount * priceNightLocal;
 		const pinCode = generateCode();
 

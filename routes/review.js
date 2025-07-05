@@ -78,8 +78,11 @@ router.post("/booking/:id", async (req, res) => {
 	const bookingId = parseInt(req.params.id);
 	const userId = parseInt(req.user.id);
 	const { property_id, rating, title, body } = req.body;
-	if (!bookingId || !userId || !rating || !property_id) {
+	if (!bookingId || !userId || !property_id) {
 		return res.status(400).send("Bad request");
+	}
+	if (!rating || rating === "") {
+		return res.json({ errors: ["Rating must not be empty"]});
 	}
 	
 	try {

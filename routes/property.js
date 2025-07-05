@@ -36,7 +36,7 @@ router.get("/all", async (req, res) => {
 	}
 });
 
-// GET /property/id/:id
+// GET /property/id/1
 router.get("/id/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
 	try {
@@ -62,7 +62,7 @@ router.get("/id/:id", async (req, res) => {
 });
 
 /**
- * GET /property/booked?id=14&date=2025-08-01 (year, month, day)
+ * GET /property/booked?id=1&date=2025-08-01 (year, month, day)
  * @query id - property id
  * @query date - queried date
  * For the year & month of date attribute, retrieve a list of check-in, check-out ranges

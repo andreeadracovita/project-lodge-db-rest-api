@@ -59,9 +59,20 @@ router.post("/signup", async (req, res) => {
 	if (!email || !password || !first_name || !last_name) {
 		return res.json({ errors: ["Fill in all mandatory fields (marked with *)"]});
 	}
-
+	if (email.length > 50) {
+		return res.json({ errors: ["Email exceeds 50 characters"]});
+	}
 	if (validateEmail(email) === false) {
 		return res.json({ errors: ["Input is not an email"]});
+	}
+	if (password.length > 50) {
+		return res.json({ errors: ["Password exceeds 50 characters"]});
+	}
+	if (first_name.length > 50) {
+		return res.json({ errors: ["First name exceeds 50 characters"]});
+	}
+	if (last_name.length > 50) {
+		return res.json({ errors: ["Last name exceeds 50 characters"]});
 	}
 
 	const passwordValidationErrors = validatePassword(password, first_name, last_name);
