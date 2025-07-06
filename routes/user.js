@@ -201,7 +201,7 @@ router.patch("/", async (req, res) => {
 		}
 
 		if (validateEmail(email) === false) {
-			return res.json({ errors: ["Input is not an email"]});
+			return res.json({ errors: ["Invalid email"]});
 		}
 		try {
 			const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
@@ -290,6 +290,10 @@ router.patch("/password", async (req, res) => {
 
 	if (old_password === new_password) {
 		return res.json({ errors: ["Old and new passwords cannot be the same"] });
+	}
+	const passwordValidationErrors = validatePassword(password, first_name, last_name);
+	if (passwordValidationErrors.length > 0) {
+		return res.json({ errors: passwordValidationErrors });
 	}
 	try {
 		const result = await db.query("SELECT password FROM users WHERE id=$1", [id]);

@@ -15,7 +15,7 @@ router.post("/exists", async (req, res) => {
 	}
 
 	if (validateEmail(email) === false) {
-		return res.json({ errors: ["Input is not an email"]});
+		return res.json({ errors: ["Invalid email"]});
 	}
 
 	try {
@@ -63,7 +63,7 @@ router.post("/signup", async (req, res) => {
 		return res.json({ errors: ["Email exceeds 50 characters"]});
 	}
 	if (validateEmail(email) === false) {
-		return res.json({ errors: ["Input is not an email"]});
+		return res.json({ errors: ["Invalid email"]});
 	}
 	if (password.length > 50) {
 		return res.json({ errors: ["Password exceeds 50 characters"]});

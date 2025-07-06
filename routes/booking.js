@@ -1,7 +1,7 @@
 import express from "express";
 
 import db from "../db/db.js";
-import { getNightsCount, generateCode } from "../utils/utils.js";
+import { getNightsCount, generateCode, validateEmail } from "../utils/utils.js";
 
 const router = express.Router();
 
@@ -34,6 +34,9 @@ router.post("/new", async (req, res) => {
 		}
 		if (email.length > 50) {
 			return res.json({ errors: ["Email exceeds 50 characters"]});
+		}
+		if (validateEmail(email) === false) {
+			return res.json({ errors: ["Invalid email"]});
 		}
 		if (first_name.length > 50) {
 			return res.json({ errors: ["First name exceeds 50 characters"]});

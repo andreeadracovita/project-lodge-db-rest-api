@@ -139,7 +139,8 @@ router.patch("/property/:id", async (req, res) => {
 		currency,
 		experiences_ids,
 		rating,
-		local_currency
+		local_currency,
+		is_listed
 	} = req.body;
 	if (title !== undefined) {
 		if (title === "") {
