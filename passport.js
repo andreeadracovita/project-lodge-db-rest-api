@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
@@ -18,11 +19,19 @@ passport.use("local", new Strategy(
 			]);
 			if (result.rows.length > 0) {
 				const user = result.rows[0];
-				if (user.password === password) {
-					return cb(null, user);
-				} else {
-					return cb(null, false);
-				}
+				const storedHashedPassword = user.password;
+				bcrypt.compare(password, storedHashedPassword, (err, valid) => {
+					if (err) {
+						console.error("Error comparing passwords:", err);
+						return cb(err);
+					} else {
+						if (valid) {
+							return cb(null, user);
+						} else {
+							return cb(null, false);
+						}
+					}
+				});
 			}
 		} catch (err) {
 			return cb(err);

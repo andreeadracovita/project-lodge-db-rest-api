@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import bodyParser from "body-parser";
 import cors from "cors";
 import env from "dotenv";
@@ -19,7 +18,6 @@ import userRouter from "./routes/user.js";
 
 const app = express();
 const port = 3000;
-// const saltRounds = 10;
 env.config();
 
 app.use(cors());

@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import express from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
@@ -6,6 +7,7 @@ import db from "../db/db.js";
 import { validateEmail, validatePassword } from "../utils/utils.js";
 
 const router = express.Router();
+const saltRounds = 12;
 
 // POST /auth/exists
 router.post("/exists", async (req, res) => {
@@ -44,6 +46,7 @@ router.post("/login", function(req, res, next) {
 				res.send(err);
 			}
 			const token = jwt.sign(user, process.env.SECRET);
+			// const token = jwt.sign(user, process.env.SECRET, { expiresIn: "1h" });
 			const userResponse = {
 				email: user.email
 			}
@@ -81,26 +84,27 @@ router.post("/signup", async (req, res) => {
 	}
 
   try {
-		const resultUsers = await db.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [
-			email, password
-		]);
-		if (resultUsers.rows.length === 1) {
-			const userId = resultUsers.rows[0].id;
-			const resultUserDetails = await db.query("INSERT INTO user_details (user_id, first_name, last_name, created_at) VALUES ($1, $2, $3, $4)", [
-				userId, first_name, last_name, new Date().toISOString().slice(0, 10)
-			]);
+  		bcrypt.hash(password, saltRounds, async (err, hash) => {
+  			if (err) {
+  				console.error("Error hashing password:", err);
+  			} else {
+  				const resultUsers = await db.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [
+					email, hash
+				]);
+				if (resultUsers.rows.length === 1) {
+					const userId = resultUsers.rows[0].id;
+					const resultUserDetails = await db.query("INSERT INTO user_details (user_id, first_name, last_name, created_at) VALUES ($1, $2, $3, $4)", [
+						userId, first_name, last_name, new Date().toISOString().slice(0, 10)
+					]);
 
-			return res.status(200).send("Sign up successful");
-		}
+					return res.status(200).send("Sign up successful");
+				}
+  			}
+  		})
 	} catch (err) {
 		console.log(err);
 		res.status(500).send("Error connecting to db");
 	}
-
-  // const token = jwt.sign(user, process.env.SECRET, { expiresIn: "1h" });
-  // res.json(token);
-
-  // ...
 });
 
 export default router;
