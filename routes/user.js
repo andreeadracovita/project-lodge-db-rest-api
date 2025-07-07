@@ -1,7 +1,8 @@
+import bcrypt from "bcrypt";
 import express from "express";
 import fs from "fs";
 
-import { storagePath } from "../constants.js";
+import { saltRounds, storagePath } from "../constants.js";
 import db from "../db/db.js";
 import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
 import { validateEmail, validatePassword } from "../utils/utils.js";
@@ -291,20 +292,47 @@ router.patch("/password", async (req, res) => {
 	if (old_password === new_password) {
 		return res.json({ errors: ["Old and new passwords cannot be the same"] });
 	}
-	const passwordValidationErrors = validatePassword(password, first_name, last_name);
-	if (passwordValidationErrors.length > 0) {
-		return res.json({ errors: passwordValidationErrors });
-	}
+	
 	try {
+		const nameResult = await db.query("SELECT first_name, last_name FROM user_details WHERE user_id=$1", [id]);
+		if (nameResult.rows.length !== 1) {
+			return res.status(401).send("Bad request");
+		}
+		// Password must not contain user's name
+		const passwordValidationErrors = validatePassword(
+			new_password,
+			nameResult.rows[0].firstName,
+			nameResult.rows[0].lastName
+		);
+		if (passwordValidationErrors.length > 0) {
+			return res.json({ errors: passwordValidationErrors });
+		}
+
 		const result = await db.query("SELECT password FROM users WHERE id=$1", [id]);
 		if (result.rows.length === 1) {
-			if (result.rows[0].password !== old_password) {
-				return res.json({ errors: ["Old password does not match"] });
-			}
-			await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [new_password, id]);
-			return res.status(200).send("Password changed successfully");
+			const storedHashedPassword = result.rows[0].password;
+			bcrypt.compare(old_password, storedHashedPassword, (err, valid) => {
+				if (err) {
+					console.error("Error comparing passwords:", err);
+				} else {
+					if (valid) {
+						bcrypt.hash(new_password, saltRounds, async (err, hash) => {
+							if (err) {
+								console.error("Error hashing password:", err);
+								return res.status(401).send("Bad request");
+							} else {
+								await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [hash, id]);
+								return res.status(200).send("Password changed successfully");
+							}
+						});
+					} else {
+						return res.json({ errors: ["Old password does not match"] });
+					}
+				}
+			});
+		} else {
+			return res.status(401).send("Bad request");
 		}
-		return res.status(401).send("Bad request");
 	} catch (err) {
 		console.log(err);
 	}

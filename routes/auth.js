@@ -3,11 +3,11 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
 
+import { saltRounds } from "../constants.js"; 
 import db from "../db/db.js";
 import { validateEmail, validatePassword } from "../utils/utils.js";
 
 const router = express.Router();
-const saltRounds = 12;
 
 // POST /auth/exists
 router.post("/exists", async (req, res) => {
@@ -83,12 +83,12 @@ router.post("/signup", async (req, res) => {
 		return res.json({ errors: passwordValidationErrors });
 	}
 
-  try {
-  		bcrypt.hash(password, saltRounds, async (err, hash) => {
-  			if (err) {
-  				console.error("Error hashing password:", err);
-  			} else {
-  				const resultUsers = await db.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [
+	try {
+		bcrypt.hash(password, saltRounds, async (err, hash) => {
+			if (err) {
+				console.error("Error hashing password:", err);
+			} else {
+				const resultUsers = await db.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [
 					email, hash
 				]);
 				if (resultUsers.rows.length === 1) {
@@ -99,8 +99,8 @@ router.post("/signup", async (req, res) => {
 
 					return res.status(200).send("Sign up successful");
 				}
-  			}
-  		})
+			}
+		});
 	} catch (err) {
 		console.log(err);
 		res.status(500).send("Error connecting to db");
