@@ -1,6 +1,6 @@
 import express from "express";
-import db from "../db/db.js";
 
+import db from "../db/db.js";
 import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
 
 const router = express.Router();
@@ -93,6 +93,7 @@ router.get("/availability", async (req, res) => {
 	const checkOut = req.query.check_out;
 	if (id && checkIn && checkOut) {
 		try {
+			// TODO fix hardcoded cancelled value (3)
 			const query = `SELECT * FROM bookings
 				WHERE property_id=$1 AND booking_status_id != 3 AND (
 					(check_in >= $2 AND check_in < $3) OR
@@ -126,6 +127,53 @@ router.get("/reviews/:id", async (req, res) => {
 	try {
 		const result = await db.query("SELECT * FROM reviews WHERE property_id=$1", [propId]);
 		res.json(result.rows);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+// POST /property/query retrieve all properties that match criteria
+router.post("/query", async (req, res) => {
+	const { country, city, check_in, check_out, guests } = req.body;
+	if (!country) {// || !check_in || !check_out || !guests
+		return res.status(401).send("Bad request");
+	}
+
+	try {
+		// TODO fix hardcoded cancelled value (3)
+		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
+			pd.price_night AS price_night_local, pd.local_currency
+			FROM properties AS p
+			JOIN property_details AS pd
+			ON p.id=pd.property_id
+			WHERE p.is_listed=true AND (p.country=$1 OR p.city=$2) AND pd.guests >= $3 AND NOT EXISTS
+			(
+				SELECT 1 FROM bookings b
+				WHERE b.property_id = p.id AND booking_status_id != 3
+				AND 
+				(
+					(check_in >= $4 AND check_in < $5) OR
+					(check_out > $4 AND check_out < $5) OR
+					(check_in <= $4 AND check_out >= $5)
+				)
+			)`;
+		const result = await db.query(query, [country, city, guests, check_in, check_out]);
+		if (result.rows.length > 0) {
+			const currencies = result.rows.map(row => row.local_currency);
+			if (currencies.length > 0) {
+				await processExchangeRates(currencies);
+			}
+		}
+		const properties = await Promise.all(
+			result.rows.map(async (row) => {
+				const rate = await fetchExchangeRate(row.local_currency);
+				return {
+					...row,
+					price_night_site: (row.price_night_local / rate).toFixed(2)
+				}
+			})
+		);
+		res.json(properties);
 	} catch (err) {
 		console.log(err);
 	}
