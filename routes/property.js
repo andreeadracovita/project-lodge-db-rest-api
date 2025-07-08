@@ -5,16 +5,33 @@ import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
 
 const router = express.Router();
 
-// GET /property/all response price is converted into site currency
-router.get("/all", async (req, res) => {
+// GET /property/home response price is converted into site currency
+router.get("/home", async (req, res) => {
+	// Find date of first Saturday
+	const checkIn = new Date();
+	const currentDayIndex = checkIn.getDay();
+	checkIn.setDate(checkIn.getDate() + 6 - currentDayIndex);
+	const checkOut = new Date();
+	checkOut.setDate(checkIn.getDate() + 1);
 	try {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
 			pd.price_night AS price_night_local, pd.local_currency
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id = pd.property_id
-			WHERE p.is_listed = true`;
-		const result = await db.query(query, []);
+			WHERE p.is_listed = true AND NOT EXISTS
+			(
+				SELECT 1 FROM bookings b
+				WHERE b.property_id = p.id AND booking_status_id != 3
+				AND 
+				(
+					(check_in >= $1 AND check_in < $2) OR
+					(check_out > $1 AND check_out < $2) OR
+					(check_in <= $1 AND check_out >= $2)
+				)
+			)
+			ORDER BY RANDOM() LIMIT 8`;
+		const result = await db.query(query, [checkIn.toISOString().slice(0, 10), checkOut.toISOString().slice(0, 10)]);
 		if (result.rows.length > 0) {
 			const currencies = result.rows.map(row => row.local_currency);
 			if (currencies.length > 0) {
@@ -135,7 +152,7 @@ router.get("/reviews/:id", async (req, res) => {
 // POST /property/query retrieve all properties that match criteria
 router.post("/query", async (req, res) => {
 	const { country, city, check_in, check_out, guests } = req.body;
-	if (!country) {// || !check_in || !check_out || !guests
+	if (!country || !check_in || !check_out || !guests) {
 		return res.status(401).send("Bad request");
 	}
 
