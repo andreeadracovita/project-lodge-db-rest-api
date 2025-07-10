@@ -296,7 +296,7 @@ router.patch("/password", async (req, res) => {
 	try {
 		const nameResult = await db.query("SELECT first_name, last_name FROM user_details WHERE user_id=$1", [id]);
 		if (nameResult.rows.length !== 1) {
-			return res.status(401).send("Bad request");
+			return res.status(400).send("Bad request");
 		}
 		// Password must not contain user's name
 		const passwordValidationErrors = validatePassword(
@@ -319,7 +319,7 @@ router.patch("/password", async (req, res) => {
 						bcrypt.hash(new_password, saltRounds, async (err, hash) => {
 							if (err) {
 								console.error("Error hashing password:", err);
-								return res.status(401).send("Bad request");
+								return res.status(400).send("Bad request");
 							} else {
 								await db.query(`UPDATE users SET password=$1 WHERE id=$2`, [hash, id]);
 								return res.status(200).send("Password changed successfully");
@@ -331,7 +331,7 @@ router.patch("/password", async (req, res) => {
 				}
 			});
 		} else {
-			return res.status(401).send("Bad request");
+			return res.status(400).send("Bad request");
 		}
 	} catch (err) {
 		console.log(err);

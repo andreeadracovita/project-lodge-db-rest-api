@@ -150,31 +150,60 @@ router.get("/reviews/:id", async (req, res) => {
 });
 
 // POST /property/query retrieve all properties that match criteria
+// Mandatory fields: check_in, check_out, guests. Auxiliary fields: city, country
 router.post("/query", async (req, res) => {
-	const { country, city, check_in, check_out, guests } = req.body;
-	if (!country || !check_in || !check_out || !guests) {
-		return res.status(401).send("Bad request");
+	const { check_in, check_out, country, city, guests, property_type, rental_type } = req.body;
+	if (!check_in || !check_out) {
+		return res.status(400).send("Bad request");
 	}
 
 	try {
 		// TODO fix hardcoded cancelled value (3)
-		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_night AS price_night_local, pd.local_currency
+		// Compose query
+		let query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
+			pd.price_night AS price_night_local, pd.local_currency, pt.name, rt.name
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id=pd.property_id
-			WHERE p.is_listed=true AND (p.country=$1 OR p.city=$2) AND pd.guests >= $3 AND NOT EXISTS
+			JOIN property_types AS pt
+			ON pd.building_type_id=pt.id
+			JOIN rental_types AS rt
+			ON pd.rental_type_id=rt.id
+			WHERE p.is_listed=true AND NOT EXISTS
 			(
 				SELECT 1 FROM bookings b
 				WHERE b.property_id = p.id AND booking_status_id != 3
 				AND 
 				(
-					(check_in >= $4 AND check_in < $5) OR
-					(check_out > $4 AND check_out < $5) OR
-					(check_in <= $4 AND check_out >= $5)
+					(check_in >= $1 AND check_in < $2) OR
+					(check_out > $1 AND check_out < $2) OR
+					(check_in <= $1 AND check_out >= $2)
 				)
 			)`;
-		const result = await db.query(query, [country, city, guests, check_in, check_out]);
+		const queryParams = [check_in, check_out];
+		let paramCount = queryParams.length;
+		if (country) {
+			query += ` AND p.country=$${++paramCount}`;
+			queryParams.push(country);
+		}
+		if (city) {
+			query += ` AND p.city=$${++paramCount}`;
+			queryParams.push(city);
+		}
+		if (guests) {
+			query += ` AND pd.guests>=$${++paramCount}`;
+			queryParams.push(parseInt(guests));
+		}
+		if (property_type) {
+			query += ` AND pt.name=$${++paramCount}`;
+			queryParams.push(property_type);
+		}
+		if (rental_type) {
+			query += ` AND rt.name=$${++paramCount}`;
+			queryParams.push(rental_type);
+		}
+
+		const result = await db.query(query, queryParams);
 		if (result.rows.length > 0) {
 			const currencies = result.rows.map(row => row.local_currency);
 			if (currencies.length > 0) {
