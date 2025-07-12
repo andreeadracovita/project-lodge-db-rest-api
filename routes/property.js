@@ -158,7 +158,7 @@ router.post("/query", async (req, res) => {
 		country,
 		city,
 		guests,
-		budget,
+		// budget,
 		property_type,
 		rental_type,
 		beds,
@@ -204,13 +204,6 @@ router.post("/query", async (req, res) => {
 		if (guests) {
 			query += ` AND pd.guests>=$${++paramCount}`;
 			queryParams.push(parseInt(guests));
-		}
-		if (budget && budget.length === 2 && budget[0] !== null && budget[1] !== null) {
-			console.log(budget);
-			// TODO Convert budget from user/site currency to property currency
-			query += ` AND pd.price_night>=$${++paramCount} AND pd.price_night<=$${++paramCount}`;
-			queryParams.push(budget[0]);
-			queryParams.push(budget[1]);
 		}
 		if (property_type) {
 			query += ` AND pd.building_type_id=ANY($${++paramCount})`;
