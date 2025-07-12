@@ -152,7 +152,21 @@ router.get("/reviews/:id", async (req, res) => {
 // POST /property/query retrieve all properties that match criteria
 // Mandatory fields: check_in, check_out, guests. Auxiliary fields: city, country
 router.post("/query", async (req, res) => {
-	const { check_in, check_out, country, city, guests, property_type, rental_type } = req.body;
+	const {
+		check_in,
+		check_out,
+		country,
+		city,
+		guests,
+		budget,
+		property_type,
+		rental_type,
+		beds,
+		bedrooms,
+		bathrooms,
+		features,
+		experiences
+	} = req.body;
 	if (!check_in || !check_out) {
 		return res.status(400).send("Bad request");
 	}
@@ -161,14 +175,10 @@ router.post("/query", async (req, res) => {
 		// TODO fix hardcoded cancelled value (3)
 		// Compose query
 		let query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_night AS price_night_local, pd.local_currency, pt.name, rt.name
+			pd.price_night AS price_night_local, pd.local_currency, pd.building_type_id, pd.rental_type_id
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id=pd.property_id
-			JOIN property_types AS pt
-			ON pd.building_type_id=pt.id
-			JOIN rental_types AS rt
-			ON pd.rental_type_id=rt.id
 			WHERE p.is_listed=true AND NOT EXISTS
 			(
 				SELECT 1 FROM bookings b
@@ -187,20 +197,52 @@ router.post("/query", async (req, res) => {
 			queryParams.push(country);
 		}
 		if (city) {
-			query += ` AND p.city=$${++paramCount}`;
-			queryParams.push(city);
+			const pattern = city + "%";
+			query += ` AND p.city LIKE $${++paramCount}`;
+			queryParams.push(pattern);
 		}
 		if (guests) {
 			query += ` AND pd.guests>=$${++paramCount}`;
 			queryParams.push(parseInt(guests));
 		}
+		if (budget && budget.length === 2 && budget[0] !== null && budget[1] !== null) {
+			console.log(budget);
+			// TODO Convert budget from user/site currency to property currency
+			query += ` AND pd.price_night>=$${++paramCount} AND pd.price_night<=$${++paramCount}`;
+			queryParams.push(budget[0]);
+			queryParams.push(budget[1]);
+		}
 		if (property_type) {
-			query += ` AND pt.name=$${++paramCount}`;
-			queryParams.push(property_type);
+			query += ` AND pd.building_type_id=ANY($${++paramCount})`;
+			queryParams.push(property_type.split(",").map(Number));
 		}
 		if (rental_type) {
-			query += ` AND rt.name=$${++paramCount}`;
-			queryParams.push(rental_type);
+			query += ` AND pd.rental_type_id=ANY($${++paramCount})`;
+			queryParams.push(rental_type.split(",").map(Number));
+		}
+		if (beds) {
+			query += ` AND pd.beds>=$${++paramCount}`;
+			queryParams.push(parseInt(beds));
+		}
+		if (bedrooms) {
+			query += ` AND pd.bedrooms>=$${++paramCount}`;
+			queryParams.push(parseInt(bedrooms));
+		}
+		if (bathrooms) {
+			query += ` AND pd.bathrooms>=$${++paramCount}`;
+			queryParams.push(parseInt(bathrooms));
+		}
+		if (features && features.length > 0) {
+			for (let feature of features) {
+				query += ` AND $${++paramCount}=ANY(pd.features_ids)`;
+				queryParams.push(parseInt(feature));
+			}
+		}
+		if (experiences && experiences.length > 0) {
+			for (let exp of experiences) {
+				query += ` AND $${++paramCount}=ANY(pd.experiences_ids)`;
+				queryParams.push(parseInt(exp));
+			}
 		}
 
 		const result = await db.query(query, queryParams);

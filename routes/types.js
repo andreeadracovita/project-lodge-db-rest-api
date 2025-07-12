@@ -3,7 +3,7 @@ import db from "../db/db.js";
 
 const router = express.Router();
 
-router.get("/building", async (req, res) => {
+router.get("/property", async (req, res) => {
 	try {
 		const result = await db.query("SELECT * FROM property_types");
 		res.json(result.rows);
