@@ -1,4 +1,6 @@
+import axios from "axios";
 import express from "express";
+import countries from "react-select-country-list";
 
 import db from "../db/db.js";
 import { fetchExchangeRate, processExchangeRates } from "../exchangeRateMap.js";
@@ -158,14 +160,14 @@ router.post("/query", async (req, res) => {
 		country,
 		city,
 		guests,
-		// budget,
 		property_type,
 		rental_type,
 		beds,
 		bedrooms,
 		bathrooms,
 		features,
-		experiences
+		experiences,
+		distance
 	} = req.body;
 	if (!check_in || !check_out) {
 		return res.status(400).send("Bad request");
@@ -196,9 +198,9 @@ router.post("/query", async (req, res) => {
 			query += ` AND p.country=$${++paramCount}`;
 			queryParams.push(country);
 		}
-		if (city) {
+		if (city && !distance) {
 			const pattern = city + "%";
-			query += ` AND p.city LIKE $${++paramCount}`;
+			query += ` AND unaccent(LOWER(p.city)) LIKE unaccent(LOWER($${++paramCount}))`;
 			queryParams.push(pattern);
 		}
 		if (guests) {
@@ -225,16 +227,28 @@ router.post("/query", async (req, res) => {
 			query += ` AND pd.bathrooms>=$${++paramCount}`;
 			queryParams.push(parseInt(bathrooms));
 		}
-		if (features && features.length > 0) {
+		if (features) {
 			for (let feature of features) {
 				query += ` AND $${++paramCount}=ANY(pd.features_ids)`;
 				queryParams.push(parseInt(feature));
 			}
 		}
-		if (experiences && experiences.length > 0) {
+		if (experiences) {
 			for (let exp of experiences) {
 				query += ` AND $${++paramCount}=ANY(pd.experiences_ids)`;
 				queryParams.push(parseInt(exp));
+			}
+		}
+		if (city && distance) {
+			const apiKey = process.env.GEOCODE_API_KEY;
+			const countryFull = countries().getLabel(country);
+			const response = await axios.get(`https://geocode.maps.co/search?q=${city+"+"+countryFull}&api_key=${apiKey}`);
+			if (response.data.length > 0) {
+				const data = response.data[0];
+				query += ` AND calculate_distance($${++paramCount}, $${++paramCount}, p.geo[0], p.geo[1])<=$${++paramCount}`;
+				queryParams.push(data.lat);
+				queryParams.push(data.lon);
+				queryParams.push(distance);
 			}
 		}
 

@@ -1,3 +1,4 @@
+import axios from "axios";
 import express from "express";
 
 import { fetchExchangeRate } from "../exchangeRateMap.js";
@@ -30,6 +31,19 @@ router.get("/user/:id", async (req, res) => {
 	} catch (err) {
 		console.log(err);
 	}
+});
+
+// GET /misc/geo/Zurich+Switzerland
+router.get("/geo/:address", async (req, res) => {
+	const address = req.params.address;
+	if (!address) {
+		return res.status(400).send("Bad request");
+	}
+
+	const apiKey = process.env.GEOCODE_API_KEY;
+	const response = await axios.get(`https://geocode.maps.co/search?q=${address}&api_key=${apiKey}`);
+	
+	return res.json(response.data);
 });
 
 export default router;
