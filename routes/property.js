@@ -177,10 +177,15 @@ router.post("/query", async (req, res) => {
 		// TODO fix hardcoded cancelled value (3)
 		// Compose query
 		let query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
-			pd.price_night AS price_night_local, pd.local_currency, pd.building_type_id, pd.rental_type_id
+			pd.price_night AS price_night_local, pd.local_currency, pd.building_type_id, pd.rental_type_id,
+			pd.beds, pd.bedrooms, pd.bathrooms, rt.name AS rental_type, pt.name AS property_type
 			FROM properties AS p
 			JOIN property_details AS pd
 			ON p.id=pd.property_id
+			JOIN rental_types AS rt
+			ON pd.rental_type_id=rt.id
+			JOIN property_types AS pt
+			ON pd.building_type_id=pt.id
 			WHERE p.is_listed=true AND NOT EXISTS
 			(
 				SELECT 1 FROM bookings b
