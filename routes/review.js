@@ -53,6 +53,26 @@ router.get("/authorize/booking/:id", async (req, res) => {
 	}
 });
 
+// GET /review/authorize/edit/1
+router.get("/authorize/edit/:id", async (req, res) => {
+	const reviewId = parseInt(req.params.id);
+	const userId = parseInt(req.user.id);
+	if (!reviewId || !userId) {
+		return res.status(400).send("Bad request");
+	}
+
+	try {
+		const result = await db.query("SELECT * FROM reviews WHERE id=$1", [reviewId]);
+		if (result.rows.length === 1 && result.rows[0].user_id === userId) {
+			return res.status(200).send({ isAuthorized: true, review_data: result.rows[0]});
+		} else {
+			return res.status(401).send({ isAuthorized: false });
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 // GET /review/exists/booking/1
 // Check if a booking was reviewed
 router.get("/exists/booking/:id", async (req, res) => {
@@ -99,6 +119,69 @@ router.post("/booking/:id", async (req, res) => {
 	}
 });
 
+async function updateReviewField(id, field, value) {
+	try {
+		await db.query(`UPDATE reviews SET ${field}=$1 WHERE id=$2`, [value, id]);
+	} catch (err) {
+		console.log(err);
+	}
+}
+
+router.patch("/:id", async (req, res) => {
+	const reviewId = parseInt(req.params.id);
+	if (!reviewId) {
+		return res.status(400).send("Bad request");
+	}
+
+	try {
+		const userId = req.user.id;
+		const result = await db.query("SELECT user_id, property_id FROM reviews WHERE id=$1", [reviewId]);
+		if (result.rows.length === 1) {
+			if (result.rows[0].user_id === userId) {
+				const { rating, title, body } = req.body;
+				if (rating) {
+					await updateReviewField(reviewId, "rating", rating);
+				}
+				if (title) {
+					await updateReviewField(reviewId, "title", title);
+				}
+				if (body) {
+					await updateReviewField(reviewId, "body", body);
+				}
+				await updatePropertyDetailsRatingAndReview(result.rows[0].property_id);
+				res.status(200).send("OK");
+
+			} else {
+				return res.status(401).send("Unauthorized");
+			}
+		}
+		
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+router.delete("/:id", async (req, res) => {
+	const reviewId = parseInt(req.params.id);
+	if (!reviewId) {
+		return res.status(400).send("Bad request");
+	}
+
+	try {
+		const selectQuery = "SELECT property_id FROM reviews WHERE id=$1";
+		const selectResult = await db.query(selectQuery, [reviewId]);
+		if (selectResult.rows.length > 0) {
+			const propertyId = selectResult.rows[0].property_id;
+			const deleteQuery = "DELETE FROM reviews WHERE id=$1";
+			const deleteResult = await db.query(deleteQuery, [reviewId]);
+			await updatePropertyDetailsRatingAndReview(propertyId);
+			res.status(200).send("OK");
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 async function updatePropertyDetailsRatingAndReview(propId) {
 	const query = "SELECT * FROM reviews WHERE property_id=$1";
 	try {
@@ -112,6 +195,10 @@ async function updatePropertyDetailsRatingAndReview(propId) {
 			const ratingAvg = (ratingSum / reviewsNo).toFixed(1);
 			await db.query("UPDATE property_details SET rating=$1, reviews_no=$2 WHERE property_id = $3", [
 				ratingAvg, reviewsNo, propId
+			]);
+		} else {
+			await db.query("UPDATE property_details SET rating=$1, reviews_no=$2 WHERE property_id = $3", [
+				null, 0, propId
 			]);
 		}
 	} catch (err) {

@@ -214,11 +214,11 @@ router.post("/query", async (req, res) => {
 		}
 		if (property_type) {
 			query += ` AND pd.building_type_id=ANY($${++paramCount})`;
-			queryParams.push(property_type.split(",").map(Number));
+			queryParams.push(property_type);
 		}
 		if (rental_type) {
 			query += ` AND pd.rental_type_id=ANY($${++paramCount})`;
-			queryParams.push(rental_type.split(",").map(Number));
+			queryParams.push(rental_type);
 		}
 		if (beds) {
 			query += ` AND pd.beds>=$${++paramCount}`;
