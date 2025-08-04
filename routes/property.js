@@ -144,7 +144,7 @@ router.get("/reviews/:id", async (req, res) => {
 		return res.status(400).send("Bad request");
 	}
 	try {
-		const result = await db.query("SELECT * FROM reviews WHERE property_id=$1", [propId]);
+		const result = await db.query("SELECT * FROM reviews WHERE property_id=$1 ORDER BY created_at DESC", [propId]);
 		res.json(result.rows);
 	} catch (err) {
 		console.log(err);
