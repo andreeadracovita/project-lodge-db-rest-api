@@ -339,8 +339,28 @@ router.patch("/password", async (req, res) => {
 });
 
 // DELETE /user
-router.delete("/", (req, res) => {
-	console.log("Delete user with id ", req.user.id);
+router.delete("/", async (req, res) => {
+	const userId = req.user.id;
+	if (!userId) {
+		return res.status(400).send("Bad request");
+	}
+	try {
+		const propertiesResult = await db.query("SELECT COUNT(*) FROM property_details WHERE host_id=$1", [userId]);
+		if (propertiesResult.rows.length === 1 && propertiesResult.rows[0].count) {
+			const avatarResult = await db.query("SELECT img_url FROM user_details WHERE user_id=$1", [userId]);
+			if (avatarResult.rows.length === 1 && avatarResult.rows[0].img_url) {
+				const path = storagePath + avatarResult.rows[0].img_url;
+				fs.unlinkSync(path);
+			}
+			await db.query("DELETE FROM user_details WHERE user_id=$1", [userId]);
+			await db.query("DELETE FROM users WHERE id=$1", [userId]);
+			return res.status(200).send("Account deleted successfully");
+		} else {
+			return res.status(400).send("Bad request");
+		}
+	} catch (err) {
+		console.log(err);
+	}
 });
 
 // GET /user/authorize/booking
