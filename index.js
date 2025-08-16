@@ -2,6 +2,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import env from "dotenv";
 import express from "express";
+import path from "path";
 import passport from "passport";
 import session from "express-session";
 
@@ -31,6 +32,7 @@ app.use(
 );
 
 app.use(express.static("../file_storage"));
+app.use(express.static("public"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

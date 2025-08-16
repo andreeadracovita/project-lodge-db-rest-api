@@ -1,8 +1,10 @@
 import express from "express";
-import multer from "multer";
+import multer, { MulterError } from "multer";
+import path from "path";
 import uniqueFilename from "unique-filename";
 import imageType, { minimumBytes } from "image-type";
 import { readChunk } from "read-chunk";
+import sharp from "sharp";
 
 import { storagePath } from "../constants.js";
 
@@ -19,22 +21,18 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-	storage,
-	limits: { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-    	// TODO: improve security
-        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-            cb(null, true);
-        } else {
-            cb(null, false);
-            const err = new Error("Only .png, .jpg and .jpeg format allowed!");
-            err.name = "ExtensionError";
-            return cb(err);
-        }
-    }
+	fileFilter: (req, file, cb) => {
+		if (file.mimetype !== "image/png" && file.mimetype !== "image/jpg" && file.mimetype !== "image/jpeg") {
+			return cb(new MulterError("LIMIT_INVALID_TYPE"));
+		}
+		cb(null, true);
+	},
+	limits: { fileSize: 6 * 1024 * 1024 },
+	// storage,
+	storage: multer.memoryStorage(),
 });
 
-router.post("/photos", upload.array("photos", 12), function (req, res, next) {
+router.post("/photos", upload.array("photos", 12), function (req, res) {
   // req.files is array of `photos` files
   // req.body will contain the text fields, if there were any
 	if (!req.files) {
@@ -43,7 +41,47 @@ router.post("/photos", upload.array("photos", 12), function (req, res, next) {
 	res.json({ message: "File uploaded successfully", filenames: req.files.map(file => file.filename) });
 });
 
-router.post("/avatar", upload.single("avatar"), (req, res) => {
+const uploadAvatarHandler = (req, res, next) => {
+	const foo = upload.single("avatar");
+	foo(req, res, async (err) => {
+		if (err) {
+			try {
+				switch (err.code) {
+					case "LIMIT_INVALID_TYPE":
+						throw new Error("Invalid file type! Only PNG and JPEG are allowed");
+
+					case "LIMIT_FILE_SIZE":
+						throw new Error("File size is too large! Max size is 2MB");
+
+					default:
+						throw new Error("Something went wrong!");
+				}
+			} catch (err) {
+				res.status(400).json({ message: err.message });
+				return;
+			}
+		}
+
+		try {
+			const filename = uniqueFilename("") + "-" + Date.now() + ".jpg";
+			const saveTo = storagePath;
+			const filePath = saveTo + filename;
+
+			await sharp(req.file.buffer)
+				.resize({ height: 600, fit: "contain" })
+				.jpeg({ quality: 30 })
+				.toFile(filePath);
+
+			req.file.filename = filename;
+			next();
+		} catch (err) {
+			res.status(400).json({ message: err.message });
+			return;
+		}
+	})
+}
+
+router.post("/avatar", uploadAvatarHandler, (req, res) => { // upload.single("avatar")
 	if (!req.file) {
 		return res.status(400).json({ error: "No file uploaded" });
 	}
