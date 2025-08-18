@@ -36,7 +36,6 @@ export async function fetchExchangeRate(targetCurrency) {
 			rate
 		}
 	);
-	console.log(exchangeRateMap);
 	return rate;
 }
 
