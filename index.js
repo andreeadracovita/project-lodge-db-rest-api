@@ -31,14 +31,10 @@ app.use(
 	})
 );
 
-app.use(express.static("../file_storage"));
-app.use(express.static("public"));
+app.use(express.static("public/file_storage"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-// app.use(passport.initialize());
-// app.use(passport.session());
 
 app.use("/auth", authRouter);
 app.use("/booking", bookingRouter);

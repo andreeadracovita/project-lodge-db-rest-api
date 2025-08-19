@@ -13,3 +13,6 @@ coverage
 
 # Benchmarking
 benchmarks/graphs
+
+# Image storage
+public/file_storage/*
