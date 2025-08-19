@@ -97,8 +97,12 @@ router.get("/booked", async (req, res) => {
 		return res.status(400).send("Bad request");
 	}
 	try {
-		// TODO: do not hard code cancelled status
-		const result = await db.query("SELECT check_in, check_out FROM bookings WHERE property_id=$1 AND booking_status_id!=3 AND check_out>$2", [id, new Date()]);
+		const query = `SELECT check_in, check_out FROM bookings AS b
+			JOIN booking_status AS bs
+			ON bs.id=b.booking_status_id
+			WHERE b.property_id=$1 AND bs.name!='cancelled' AND b.check_out>$2
+		`;
+		const result = await db.query(query, [id, new Date()]);
 		return res.json(result.rows);
 	} catch (err) {
 		console.log(err);
@@ -112,9 +116,10 @@ router.get("/availability", async (req, res) => {
 	const checkOut = req.query.check_out;
 	if (id && checkIn && checkOut) {
 		try {
-			// TODO fix hardcoded cancelled value (3)
-			const query = `SELECT * FROM bookings
-				WHERE property_id=$1 AND booking_status_id != 3 AND (
+			const query = `SELECT * FROM bookings AS b
+				JOIN booking_status AS bs
+				ON bs.id=b.booking_status_id
+				WHERE b.property_id=$1 AND bs.name!='cancelled' AND (
 					(check_in >= $2 AND check_in < $3) OR
 					(check_out > $2 AND check_out < $3) OR
 					(check_in <= $2 AND check_out >= $3)
@@ -174,8 +179,6 @@ router.post("/query", async (req, res) => {
 	}
 
 	try {
-		// TODO fix hardcoded cancelled value (3)
-		// Compose query
 		let query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
 			pd.price_night AS price_night_local, pd.local_currency, pd.building_type_id, pd.rental_type_id,
 			pd.beds, pd.bedrooms, pd.bathrooms, rt.name AS rental_type, pt.name AS property_type
@@ -188,8 +191,10 @@ router.post("/query", async (req, res) => {
 			ON pd.building_type_id=pt.id
 			WHERE p.is_listed=true AND NOT EXISTS
 			(
-				SELECT 1 FROM bookings b
-				WHERE b.property_id = p.id AND booking_status_id != 3
+				SELECT 1 FROM bookings AS b
+				JOIN booking_status AS bs
+				ON bs.id=b.booking_status_id
+				WHERE b.property_id = p.id AND bs.name!='cancelled'
 				AND 
 				(
 					(check_in >= $1 AND check_in < $2) OR
