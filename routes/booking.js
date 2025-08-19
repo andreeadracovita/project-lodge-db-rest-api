@@ -54,6 +54,20 @@ router.post("/new", async (req, res) => {
 			return res.json({ errors: ["Phone number exceeds 50 characters"]});
 		}
 
+		// Check for availability
+		const availabilityQuery = `SELECT * FROM bookings AS b
+			JOIN booking_status AS bs
+			ON bs.id=b.booking_status_id
+			WHERE b.property_id=$1 AND bs.name!='cancelled' AND (
+				(check_in >= $2 AND check_in < $3) OR
+				(check_out > $2 AND check_out < $3) OR
+				(check_in <= $2 AND check_out >= $3)
+			);`;
+		const availabilityResult = await db.query(availabilityQuery, [property_id, check_in, check_out]);
+		if (availabilityResult.rows.length > 0) {
+			return res.json({ errors: ["Property is already booked for the selected dates"]});
+		}
+
 		const priceQuery = `SELECT price_night, local_currency FROM property_details WHERE property_id=$1`;
 		const propertyPriceResult = await db.query(priceQuery, [property_id]);
 		if (propertyPriceResult.rows.length === 0) {
