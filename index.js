@@ -32,6 +32,7 @@ app.use(
 );
 
 app.use(express.static("public/file_storage"));
+app.use(express.static("public/images"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

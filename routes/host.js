@@ -351,8 +351,15 @@ router.delete("/property/:id", async (req, res) => {
 		if (result.rows.length === 1) {
 			const hostId = result.rows[0].host_id;
 			if (hostId === req.user.id) {
-				// Check if property_id appears in any bookings. Delete only if no bookings.
-				const bookingResult = await db.query("SELECT * FROM bookings WHERE property_id=$1", [id]);
+				// Check if property_id appears in any bookings. Delete only if no upcoming bookings.
+				const bookingQuery = `
+					SELECT * FROM bookings AS b
+					JOIN booking_status AS bs
+					ON bs.id=b.booking_status_id
+					WHERE b.property_id=$1 AND b.check_out>=$2 AND not bs.name!='cancelled'`;
+				const bookingResult = await db.query(bookingQuery, [id, new Date().toISOString().slice(0, 10)]);
+				console.log(new Date().toISOString().slice(0, 10));
+				console.log(bookingResult.rows);
 				if (bookingResult.rows.length === 0) {
 					// Delete associated entries from wishlist
 					await db.query("DELETE FROM wishlist WHERE property_id=$1", [id]);
