@@ -7,6 +7,7 @@ import passport from "passport";
 import session from "express-session";
 
 import "./passport.js";
+import { initDB } from "./db/db.js";
 import authRouter from "./routes/auth.js";
 import bookingRouter from "./routes/booking.js";
 import hostRouter from "./routes/host.js";
@@ -46,6 +47,8 @@ app.use("/review", passport.authenticate('jwt', {session: false}), reviewRouter)
 app.use("/types", typesRouter);
 app.use("/upload", passport.authenticate('jwt', {session: false}), uploadRouter);
 app.use("/user", passport.authenticate('jwt', {session: false}), userRouter);
+
+initDB();
 
 app.listen(port, () => {
 	console.log(`Backend server running on port ${port}`);
