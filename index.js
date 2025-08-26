@@ -19,9 +19,9 @@ import uploadRouter from "./routes/upload.js";
 import userRouter from "./routes/user.js";
 
 const app = express();
-const port = process.env.PORT || 3000;
 
 env.config();
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 
