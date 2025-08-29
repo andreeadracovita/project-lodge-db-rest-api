@@ -42,7 +42,7 @@ VALUES (1, 'pending'), (2, 'confirmed'), (3, 'cancelled');
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
 	email VARCHAR(50) NOT NULL,
-	password VARCHAR(50) NOT NULL
+	password VARCHAR(80) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_details (
