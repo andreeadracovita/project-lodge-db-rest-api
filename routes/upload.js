@@ -3,7 +3,6 @@ import multer, { MulterError } from "multer";
 import path from "path";
 import uniqueFilename from "unique-filename";
 import imageType, { minimumBytes } from "image-type";
-import { readChunk } from "read-chunk";
 import sharp from "sharp";
 
 import { storagePath } from "../constants.js";

@@ -40,7 +40,7 @@ passport.use("local", new Strategy(
 );
 
 let opts = {
-	jwtFromRequest: ExtractJwt.fromHeader("authorization"),
+	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // ExtractJwt.fromHeader("authorization")
 	secretOrKey: process.env.SECRET
 };
 passport.use(new JwtStrategy(opts, async function(jwtPayload, cb) {
