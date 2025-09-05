@@ -40,9 +40,10 @@ passport.use("local", new Strategy(
 );
 
 let opts = {
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // ExtractJwt.fromHeader("authorization")
+	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 	secretOrKey: process.env.SECRET
 };
+
 passport.use(new JwtStrategy(opts, async function(jwtPayload, cb) {
 	try {
 		const result = await db.query("SELECT * FROM users WHERE id = $1", [
@@ -52,8 +53,9 @@ passport.use(new JwtStrategy(opts, async function(jwtPayload, cb) {
 			const user = result.rows[0];
 			return cb(null, user);
 		}
+		return cb(null, false);
 	} catch (err) {
-		return cb(err);
+		return cb(err, false);
 	}
 }));
 
