@@ -358,8 +358,6 @@ router.delete("/property/:id", async (req, res) => {
 					ON bs.id=b.booking_status_id
 					WHERE b.property_id=$1 AND b.check_out>=$2 AND not bs.name!='cancelled'`;
 				const bookingResult = await db.query(bookingQuery, [id, new Date().toISOString().slice(0, 10)]);
-				console.log(new Date().toISOString().slice(0, 10));
-				console.log(bookingResult.rows);
 				if (bookingResult.rows.length === 0) {
 					// Delete associated entries from wishlist
 					await db.query("DELETE FROM wishlist WHERE property_id=$1", [id]);
