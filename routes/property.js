@@ -62,8 +62,12 @@ router.get("/id/:id", async (req, res) => {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, p.is_listed,
 			pd.street, pd.street_no, pd.description, pd.guests, pd.beds, pd.bedrooms, pd.bathrooms, pd.features_ids,
 			pd.building_type_id, pd.rental_type_id, pd.images_url_array, pd.price_night AS price_night_local,
-			pd.local_currency, pd.experiences_ids, pd.rating, pd.reviews_no
+			pd.local_currency, pd.experiences_ids, pd.rating, pd.reviews_no, rt.name AS rental_type, pt.name AS building_type
 			FROM properties AS p, property_details AS pd
+			JOIN rental_types AS rt
+			ON pd.rental_type_id=rt.id
+			JOIN property_types AS pt
+			ON pd.building_type_id=pt.id
 			WHERE p.id=$1 AND p.id=pd.property_id`;
 		const result = await db.query(query, [id]);
 		if (result.rows.length === 1) {
