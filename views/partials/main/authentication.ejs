@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<div id="auth">
+	<h2>Authentication</h2>
+	<p>Unauthenticated routes to check if user exists by email, log in or sign up.</p>
+
+	<div class="mt-3">
+		<h4 id="auth-check-exist">Check if user exists</h4>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="post">POST</span> /auth/exists</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"email": "abc@domain.com"
+}</code></pre>
+		  </div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"userExists": true
+}</code></pre>
+		  </div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="login">Log in</h4>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="post">POST</span> /auth/login</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"email": "abc@domain.com",
+	"password": "pass"
+}</code></pre>	
+		  </div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	400 Bad Request
+		  	<pre><code>{
+	"message": "Authentication failed",
+	"user": false
+}</code></pre>
+		  	<br />
+		  	<pre><code>{
+	"token": "xxxxx.yyyyy.zzzzz"
+}</code></pre>
+		  </div>
+		</div>
+	</div>
+	
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="signup">Sign up</h4>
+		<div class="card">
+			<p class="card-header no-anchor"><span class="post">POST</span> /auth/signup</p>
+			<div class="card-body">
+				<pre><code>{
+	"email": "abc@domain.com",
+	"password": "pass",
+	"first_name": "John",
+	"last_name": "Doe"
+}</code></pre>
+			</div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP 200</code></pre>
+				<pre><code>{
+	message: "Sign up successful"
+}</code></pre>
+			</div>
+		</div>
+	</div>
+</div>

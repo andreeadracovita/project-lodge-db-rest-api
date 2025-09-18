@@ -13,7 +13,6 @@ env.config();
 // });
 
 const connectionString = process.env.PG_DATABASE_URL;
-
 const db = new pg.Client({
 	connectionString
 });

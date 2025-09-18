@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<h1 id="introduction">Introduction</h1>
+<p>This is the API used by Lodge application for interacting with external APIs and with the database. It is a RESTful API containing routes for create/read/update/delete operations, as well as fetching data from APIs for currency and geolocation.</p>
+<p class="mb-1"><b>Unauthenticated routes:</b></p>
+<ul>
+  <li>Authentication: `/auth`</li>
+  <li>Property fetch routes: `/property`</li>
+  <li>Booking CRUD routes: `/booking`</li>
+  <li>Miscellaneous: `/misc`</li>
+  <li>Types (property, rental, feature, experience types): `/types`</li>
+</ul>
+<p class="mt-3 mb-1"><b>Authenticated routes (JWT):</b></p>
+<ul>
+  <li>User: `/user`</li>
+  <li>File upload: `/upload`</li>
+  <li>Reviews: `/review`</li>
+  <li>Host - property create, update and delete routes: `/host`</li>
+</ul>
+<p>External APIs:</p>
+<ul>
+  <li><a href="https://geocode.maps.co/">https://geocode.maps.co/</a> - to extract GPS coordinates from addresses</li>
+  <li><a href="https://freecurrencyapi.com/">https://freecurrencyapi.com/</a> - to fetch the latest currency exchange rate, in order to show users prices in their preferred currency</li>
+</ul>

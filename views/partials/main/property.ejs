@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<div id="property">
+	<h2>Properties</h2>
+	<p>Unauthenticated routes to retrieve multiple properties, detailed properties, etc.</p>
+
+	<div class="mt-3">
+		<h4 id="properties-home">Fetch properties for landing page</h4>
+		<p>Returns 8 (max) properties with prices converted to site currency (EUR).</p>
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /property/home</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	<pre><code>{
+[
+    {
+        "id": 1,
+        "title": "Sea Voyager Villa",
+        "geo": {
+            "x": 40.62617383681707,
+            "y": 14.498273742410621
+        },
+        "city": "Arienzo",
+        "country": "IT",
+        "rating": 5,
+        "reviews_no": 1,
+        "images_url_array": [
+            "7cda38e2-1755945364513.jpg",
+            "e3966213-1755945364898.jpg",
+            "1d674704-1755945365041.jpg",
+            "38f3d38c-1755945365202.jpg",
+            "795b74b9-1755945365356.jpg"
+        ],
+        "price_night_local": "80.00",
+        "local_currency": "EUR",
+        "price_night_site": "80.00"
+    },
+    ...
+]
+}</code></pre>
+		  </div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="properties-home">Fetch properties for landing page</h4>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="get">GET</span> /property/home</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"email": "abc@domain.com"
+}</code></pre>
+		  </div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"userExists": true
+}</code></pre>
+		  </div>
+		</div>
+	</div>
+
+	<hr />
+</div>

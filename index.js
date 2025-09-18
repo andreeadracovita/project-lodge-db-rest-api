@@ -35,9 +35,14 @@ app.use(
 
 app.use(express.static("public/file_storage"));
 app.use(express.static("public/images"));
+app.use(express.static("public/styles"));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+app.get("/", (req, res) => {
+  res.render("apiDocs.ejs");
+})
 
 app.use("/auth", authRouter);
 app.use("/booking", bookingRouter);

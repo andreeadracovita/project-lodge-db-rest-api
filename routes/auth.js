@@ -47,10 +47,7 @@ router.post("/login", function(req, res, next) {
 			}
 			const token = jwt.sign(user, process.env.SECRET);
 			// const token = jwt.sign(user, process.env.SECRET, { expiresIn: "1h" });
-			const userResponse = {
-				email: user.email
-			}
-			return res.json({ userResponse, token });
+			return res.json({ token });
 		});
 	})(req, res);
 });

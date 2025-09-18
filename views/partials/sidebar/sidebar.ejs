@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<div class="flex-shrink-0 p-3" style="width: 300px; margin-right: 1px solid">
+  <div class="sticky-top pt-3">
+    <a href="/" class="d-flex align-items-center pb-3 mb-3 link-body-emphasis text-decoration-none border-bottom">
+      <span class="fs-5 fw-semibold">Lodge Backend REST API</span>
+    </a>
+    <ul class="list-unstyled ps-0">
+      <li>
+        <a href="#" class="link-body-emphasis d-inline-flex text-decoration-none rounded">Introduction</a>
+      </li>
+
+      <li class="border-top my-3"></li>
+
+      <li>Unauthenticated routes</li>
+
+      <%- include("sidebarAuthentication.ejs") %>
+      <%- include("sidebarProperty.ejs") %>
+      <%- include("sidebarBooking.ejs") %>
+      <%- include("sidebarMiscellaneous.ejs") %>
+      <%- include("sidebarTypes.ejs") %>
+
+      <li class="border-top my-3"></li>
+      
+      <li>Authenticated routes</li>
+
+      <%- include("sidebarUser.ejs") %>
+      <%- include("sidebarHost.ejs") %>
+      <%- include("sidebarUpload.ejs") %>
+      <%- include("sidebarReviews.ejs") %>
+    </ul>
+  </div>
+</div>

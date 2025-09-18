@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="/style.css" rel="stylesheet">
+    <title>Lodge Backend REST API</title>
+  </head>
+  <body>
+    <div class="d-flex">
+      <%- include("partials/sidebar/sidebar.ejs") %>
+      <div class="container pt-5">
+        <%- include("partials/main/introduction.ejs") %>
+        <hr />
+        <%- include("partials/main/authentication.ejs") %>
+        <hr />
+        <%- include("partials/main/property.ejs") %>
+        <hr />
+        <%- include("partials/main/miscellaneous.ejs") %>
+        <hr />
+        <%- include("partials/main/types.ejs") %>
+        <hr />
+        <%- include("partials/main/user.ejs") %>
+        <hr />
+        <%- include("partials/main/host.ejs") %>
+        <hr />
+        <%- include("partials/main/upload.ejs") %>
+        <hr />
+        <%- include("partials/main/reviews.ejs") %>
+        <hr />
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  </body>
+</html>
