@@ -168,6 +168,24 @@ router.get("/wishlist/all", async (req, res) => {
 	}
 });
 
+// GET /user/authorize/booking
+router.get("/authorize/booking", async (req, res) => {
+	const bookingId = req.query.id;
+	if (!bookingId) {
+		res.status(404).message("Missing booking number");
+	}
+
+	try {
+		const result = await db.query("SELECT email FROM bookings WHERE id=$1", [bookingId]);
+		if (result.rows.length > 0 && result.rows[0].email === req.user.email) {
+			return res.json({ authorized: true });
+		}
+		return res.json({ authorized: false });
+	} catch (err) {
+		console.log(err);
+	}
+});
+
 async function updateBookingsEmail(oldEmail, newEmail) {
 	try {
 		await db.query(`UPDATE bookings SET email=$1 WHERE email=$2`, [newEmail, oldEmail]);
@@ -358,24 +376,6 @@ router.delete("/", async (req, res) => {
 		} else {
 			return res.status(400).send("Bad request");
 		}
-	} catch (err) {
-		console.log(err);
-	}
-});
-
-// GET /user/authorize/booking
-router.get("/authorize/booking", async (req, res) => {
-	const bookingId = req.query.id;
-	if (!bookingId) {
-		res.status(404).message("Missing booking number");
-	}
-
-	try {
-		const result = await db.query("SELECT email FROM bookings WHERE id=$1", [bookingId]);
-		if (result.rows.length > 0 && result.rows[0].email === req.user.email) {
-			return res.json({ authorized: true });
-		}
-		return res.json({ authorized: false });
 	} catch (err) {
 		console.log(err);
 	}

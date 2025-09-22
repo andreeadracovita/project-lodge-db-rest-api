@@ -1,29 +1,46 @@
 <!DOCTYPE html>
-<div id="booking">
+<div id="upload">
 	<h2>Upload</h2>
-	<p>Authenticated routes ...</p>
+	<p>Authenticated routes to upload single photos as avatars and multiple photos for properties.</p>
 
 	<div class="mt-3">
-		<h4 id="upload-...">...</h4>
+		<h4 id="upload-avatar">Upload avatar</h4>
 
 		<div class="card">
-		  <p class="card-header no-anchor"><span class="get">GET</span> /upload/...</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"email": "abc@domain.com"
-}</code></pre>
-		  </div>
+			<p class="card-header no-anchor"><span class="post">POST</span> /upload/avatar</p>
+			<div class="card-body">Form Data with single file field "avatar"</div>
 		</div>
 
 		<div class="card mt-2">
-		  <p class="card-header no-anchor">Response</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"userExists": true
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"message": "File uploaded successfully",
+	"filename": "d388915e-1758367395800.jpg"
 }</code></pre>
-		  </div>
+			</div>
 		</div>
 	</div>
 
 	<hr />
+
+	<div class="mt-3">
+		<h4 id="upload-photos">Upload photos</h4>
+		<p>Upload photos for properties (max 12).</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="post">POST</span> /upload/photos</p>
+			<div class="card-body">Form Data with multiple files field "photos"</div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"message": "Files uploaded successfully",
+	"filenames": ["d388915e-1758367395800.jpg", ...]
+}</code></pre>
+			</div>
+		</div>
+	</div>
 </div>

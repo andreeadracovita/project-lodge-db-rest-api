@@ -1,16 +1,63 @@
 <!DOCTYPE html>
 <div id="host">
 	<h2>Host</h2>
-	<p>Authenticated routes ...</p>
+	<p>Authenticated routes for viewing, creating, updating and fetching hosted properties.</p>
 
 	<div class="mt-3">
-		<h4 id="host-">...</h4>
+		<h4 id="host-properties">Fetch all properties by host user</h4>
 
 		<div class="card">
-		  <p class="card-header no-anchor"><span class="get">GET</span> /host/...</p>
+			<p class="card-header no-anchor"><span class="get">GET</span> /host/properties</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	<pre><code>[
+  {
+    "id": 1,
+    "title": "Sea Voyager Villa",
+    "city": "Arienzo",
+    "country": "IT",
+    "is_listed": true,
+    "price_night_local": "80.00",
+    "local_currency": "EUR",
+    "images_url_array": [
+      "7cda38e2-1755945364513.jpg",
+      "e3966213-1755945364898.jpg",
+      "1d674704-1755945365041.jpg",
+      "38f3d38c-1755945365202.jpg",
+      "795b74b9-1755945365356.jpg"
+    ]
+  },
+  ...
+]</code></pre>
+		  </div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="host-property-new">Create a new property</h4>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="post">POST</span> /host/property/new</p>
 		  <div class="card-body">
 		  	<pre><code>{
-	"email": "abc@domain.com"
+  "title": "Test",
+  "geo": {
+    "x": 64.1422807,
+    "y": -21.906605711293757
+  },
+  "city": "Reykjavík",
+  "country": "IS",
+  "street": "Laugavegur",
+  "street_no": "1",
+  "building_type_id": 1,
+  "rental_type_id": 1,
+  "local_currency": "ISK"
 }</code></pre>
 		  </div>
 		</div>
@@ -19,11 +66,132 @@
 		  <p class="card-header no-anchor">Response</p>
 		  <div class="card-body">
 		  	<pre><code>{
-	"userExists": true
+	"id": 1
 }</code></pre>
 		  </div>
 		</div>
 	</div>
 
 	<hr />
+
+	<div class="mt-3">
+		<h4 id="host-property-update">Update a property</h4>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="patch">PATCH</span> /host/property/1</p>
+		  <div class="card-body">
+		  	<pre><code>{
+	"title: "New property name",
+	"city": "City",
+	"guests": 5,
+	...
+}</code></pre>
+		  </div>
+		</div>
+
+		<div class="card mt-2">
+		  <p class="card-header no-anchor">Response</p>
+		  <div class="card-body">
+		  	<pre><code>HTTP status 200</code></pre>
+		  	<pre><code>{
+	"message": "OK"
+}</code></pre>
+		  </div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="host-bookings-partitioned">Fetch all bookings for hosted properties</h4>
+		<p>Result properties are partitioned into 4 categories: arriving, checking out, current, upcoming.</p>
+
+		<div class="card">
+		  <p class="card-header no-anchor"><span class="get">GET</span> /host/bookings/partitioned</p>
+		  <div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+		  		<pre><code>{
+  "arriving": [
+    {
+      "id": 27,
+      "first_name": "John",
+      "last_name": "Doe",
+      "guests": 2,
+      "check_in": "2025-09-18T21:00:00.000Z",
+      "check_out": "2025-09-19T21:00:00.000Z",
+      "pin_code": "9493",
+      "title": "Lake House"
+    },
+    ...
+  ],
+  "checkingOut": [],
+  "current": [],
+  "upcoming": []
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="host-bookings-calendar">Fetch bookings for property by id</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /host/bookings/calendar/property/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+  {
+    "id": 1,
+    "email": "abc@abc.com",
+    "property_id": 1,
+    "first_name": "John",
+    "last_name": "Doe",
+    "guest_address": "Some address for legal reasons",
+    "guest_city": "Reykjavík",
+    "guest_country": "IS",
+    "guest_phone_no": "+410712345678",
+    "check_in": "2025-09-12T21:00:00.000Z",
+    "check_out": "2025-09-13T21:00:00.000Z",
+    "guests": 1,
+    "booking_status_id": 2,
+    "pin_code": "5857",
+    "amount": "17000.00",
+    "currency": "ISK"
+  },
+  ...
+]</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="host-property-delete">Delete a property</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="delete">DELETE</span> /host/property/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "Success"
+}</code></pre>
+			</div>
+		</div>
+	</div>
 </div>

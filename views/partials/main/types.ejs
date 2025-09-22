@@ -1,29 +1,117 @@
 <!DOCTYPE html>
 <div id="types">
 	<h2>Types</h2>
-	<p>Unauthenticated routes ...</p>
+	<p>Unauthenticated routes to get types from the database: property, rental, feature and experience.</p>
 
 	<div class="mt-3">
-		<h4 id="types-...">...</h4>
+		<h4 id="types-property">Fetch property types</h4>
 
 		<div class="card">
-		  <p class="card-header no-anchor"><span class="get">GET</span> /types/...</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"email": "abc@domain.com"
-}</code></pre>
-		  </div>
+			<p class="card-header no-anchor"><span class="get">GET</span> /types/property</p>
+			<div class="card-body"></div>
 		</div>
 
 		<div class="card mt-2">
-		  <p class="card-header no-anchor">Response</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"userExists": true
-}</code></pre>
-		  </div>
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"id": 1,
+		"name": "hotel",
+		"img_url": "hotel.jpg"
+	},
+	{
+		"id": 2,
+		"name": "apartment",
+		"img_url": "apartment.jpg"
+	},
+	...
+]</code></pre>
+			</div>
 		</div>
 	</div>
 
 	<hr />
+
+	<div class="mt-3">
+		<h4 id="types-rental">Fetch rental types</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /types/rental</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"id": 1,
+		"name": "room"
+	},
+	{
+		"id": 2,
+		"name": "entire place"
+	},
+	...
+]</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="types-feature">Fetch feature types</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /types/feature</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"id": 1,
+		"name": "free WiFi"
+	},
+	{
+		"id": 2,
+		"name": "free parking"
+	},
+	...
+]</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="types-experience">Fetch experience types</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /types/experience</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"id": 1,
+		"name": "adventure"
+	},
+	{
+		"id": 2,
+		"name": "beach"
+	},
+	...
+]</code></pre>
+			</div>
+		</div>
+	</div>
 </div>

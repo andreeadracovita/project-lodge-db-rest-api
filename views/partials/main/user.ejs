@@ -4,24 +4,259 @@
 	<p>Authenticated routes ...</p>
 
 	<div class="mt-3">
-		<h4 id="user-...">...</h4>
+		<h4 id="user-config">Fetch user account configurations</h4>
+		<p>Returns user settings in case the user exists.</p>
+		<p>Returns status 404 with message "User not found" if the user does not exist.</p>
 
 		<div class="card">
-		  <p class="card-header no-anchor"><span class="get">GET</span> /user/...</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"email": "abc@domain.com"
-}</code></pre>
-		  </div>
+			<p class="card-header no-anchor"><span class="get">GET</span> /user/config</p>
+			<div class="card-body"></div>
 		</div>
 
 		<div class="card mt-2">
-		  <p class="card-header no-anchor">Response</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"userExists": true
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"email": "abc@abc.com",
+	"first_name": "John",
+	"last_name": "Doe",
+	"country_code": "IS",
+	"language": null,
+	"currency": "ISK",
+	"experiences_ids": [
+		8
+	],
+	"img_url": "d388915e-1758367395800.jpg"
 }</code></pre>
-		  </div>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-bookings">Fetch all bookings for user</h4>
+		<p>Fetch all bookings partitioned into categories: current, upcoming, completed and cancelled.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /user/booking/all</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"current": [
+		...
+	],
+	"upcoming": [],
+	"completed": [
+	{
+		"booking_id": 27,
+		"property_id": 59,
+		"check_in": "2025-09-18T21:00:00.000Z",
+		"check_out": "2025-09-19T21:00:00.000Z",
+		"booking_status_id": 2,
+		"pin_code": "9493",
+		"title": "Lake House",
+		"city": "Laugarvatn",
+		"country": "IS",
+		"geo": {
+			"x": 64.211638290357,
+			"y": -20.73186488488267
+		},
+		"images_url_array": [
+			"f8b4b77f-1757520335408.jpg",
+			"779f3352-1757520335563.jpg",
+			"0cc99907-1757520335694.jpg",
+			"25ac48bd-1757520335768.jpg",
+			"e47f499a-1757520336015.jpg"
+		],
+		"street": "Laugarbraut",
+		"street_no": "840",
+		"booking_status": "confirmed"
+		},
+		...
+	],
+	"cancelled": [
+		...
+	]
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-wishlist-check">Check if a property is wishlisted by user</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /user/wishlist/property-id/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"is_wishlisted": true
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-wishlist-toggle">Toggle wishlist for property for user</h4>
+		<p>If a property is in the user's wishlist, remove it. Otherwise, add the property to user's wishlist.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="post">POST</span> /user/wishlist/toggle/property-id/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"is_wishlisted": false
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-wishlist-all">Fetch wishlisted properties for user</h4>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /user/wishlist/all</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"id": 2,
+		"title": "Aurora Cottage",
+		"geo": {
+			"x": 65.54850691798407,
+			"y": -19.436812415122823
+		},
+		"city": "Varmahlíð",
+		"country": "IS",
+		"rating": null,
+		"images_url_array": [
+			"00000002_1.jpg",
+			"00000002_2.jpg",
+			"00000002_3.jpg",
+			"00000002_4.jpg",
+			"00000002_5.jpg"
+		],
+		"price_night_local": "21300.00",
+		"local_currency": "ISK",
+		"price_night_site": "148.57"
+	}
+]</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-authorize">Authorize booking for user</h4>
+		<p>For an authenticated user, authorize if he can view a booking without using the PIN code. He can view a booking if the booking matches the email.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="get">GET</span> /user/authorize/booking</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"authorized": false
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-update">Update user settings</h4>
+		<p>Update user settings: email, first and last name, avatar, country, language, currency or experiences. The response can contain errors in case the new value does not match criteria.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="patch">PATCH</span> /user</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "User updated successfully"
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-password">Update user password</h4>
+		<p>The response can contain errors if the new password does not match criteria or if the old password does not match. In case of failure, the response has status 400.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="patch">PATCH</span> /user/password</p>
+			<div class="card-body">
+				<pre><code>{
+	"old_password": "oldpass",
+	"new_password": "newpass"
+}</code></pre>
+			</div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "Password changed successfully"
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="user-delete">Delete user account</h4>
+		<p>Deletes user account if no property is associated with the account. Response can return with HTTP status 400 if unsuccessful.</p>
+
+		<div class="card">
+			<p class="card-header no-anchor"><span class="delete">DELETE</span> /user</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "Account deleted successfully"
+}</code></pre>
+			</div>
 		</div>
 	</div>
 

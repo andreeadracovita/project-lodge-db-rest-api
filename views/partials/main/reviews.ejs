@@ -1,29 +1,124 @@
 <!DOCTYPE html>
-<div id="reviews">
-	<h2>Reviews</h2>
-	<p>Authenticated routes ...</p>
+<div id="review">
+	<h2>Review</h2>
+	<p>Authenticated routes for fetching, creating and deleting reviews.</p>
 
 	<div class="mt-3">
-		<h4 id="reviews-...">...</h4>
+		<h4 id="review-all">Fetch all reviews by user</h4>
 
 		<div class="card">
-		  <p class="card-header no-anchor"><span class="get">GET</span> /reviews/...</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"email": "abc@domain.com"
-}</code></pre>
-		  </div>
+		 	<p class="card-header no-anchor"><span class="get">GET</span> /review/all</p>
+			<div class="card-body"></div>
 		</div>
 
 		<div class="card mt-2">
-		  <p class="card-header no-anchor">Response</p>
-		  <div class="card-body">
-		  	<pre><code>{
-	"userExists": true
-}</code></pre>
-		  </div>
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>[
+	{
+		"property_id": 1,
+		"user_id": 1,
+		"title": "Great stay!",
+		"body": "This place was awesome",
+		"rating": 5,
+		"created_at": "2025-07-21T21:00:00.000Z",
+		"id": 8,
+		"booking_id": 2
+	},
+	...
+]</code></pre>
+			</div>
 		</div>
 	</div>
 
 	<hr />
+
+	<div class="mt-3">
+		<h4 id="review-authorize">Authorize access to write a review</h4>
+
+		<div class="card">
+		 	<p class="card-header no-anchor"><span class="get">GET</span> /review/authorize/booking/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"isAuthorized": true,
+	"property_id": 3
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="review-exists">Check if user has reviewed a booking</h4>
+
+		<div class="card">
+		 	<p class="card-header no-anchor"><span class="get">GET</span> /review/exists/booking/1</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>{
+	"exists": false
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="review-post">Post a review</h4>
+
+		<div class="card">
+		 	<p class="card-header no-anchor"><span class="post">POST</span> /review/booking/1</p>
+			<div class="card-body">
+				<pre><code>{
+	"property_id": 14,
+	"rating": 5,
+	"title": null,
+	"body": "Secluded place in the middle of nature"
+}</code></pre>	
+			</div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "OK"
+}</code></pre>
+			</div>
+		</div>
+	</div>
+
+	<hr />
+
+	<div class="mt-3">
+		<h4 id="review-delete">Delete a review</h4>
+
+		<div class="card">
+		 	<p class="card-header no-anchor"><span class="delete">DELETE</span> /review/20</p>
+			<div class="card-body"></div>
+		</div>
+
+		<div class="card mt-2">
+			<p class="card-header no-anchor">Response</p>
+			<div class="card-body">
+				<pre><code>HTTP status 200</code></pre>
+				<pre><code>{
+	"message": "OK"
+}</code></pre>
+			</div>
+		</div>
+	</div>
 </div>

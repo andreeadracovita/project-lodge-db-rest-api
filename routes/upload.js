@@ -81,7 +81,7 @@ router.post("/photos", uploadPhotosHandler, function (req, res) { // upload.arra
 	if (!req.files) {
 		return res.status(400).json({ error: "No file uploaded" });
 	}
-	res.json({ message: "File uploaded successfully", filenames: req.files.map(file => file.filename) });
+	res.json({ message: "Files uploaded successfully", filenames: req.files.map(file => file.filename) });
 });
 
 const uploadAvatarHandler = (req, res, next) => {
