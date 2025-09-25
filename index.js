@@ -5,6 +5,7 @@ import express from "express";
 import path from "path";
 import passport from "passport";
 import session from "express-session";
+import createMemoryStore from "memorystore";
 
 import "./passport.js";
 import { initDB } from "./db/db.js";
@@ -25,13 +26,16 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-app.use(
-	session({
-		secret: process.env.SESSION_SECRET,
-		resave: false,
-		saveUninitialized: true
-	})
-);
+const MemoryStore = createMemoryStore(session);
+app.use(session({
+    cookie: { maxAge: 86400000 },
+    store: new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
+    resave: false,
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: false
+}));
 
 app.use(express.static("public/file_storage"));
 app.use(express.static("public/images"));

@@ -26,6 +26,7 @@
     "express-session": "^1.18.1",
     "image-type": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
+    "memorystore": "^1.6.7",
     "multer": "^2.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
