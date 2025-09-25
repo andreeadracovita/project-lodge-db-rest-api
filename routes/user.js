@@ -258,7 +258,10 @@ router.patch("/", async (req, res) => {
 		const result = await db.query("SELECT img_url FROM user_details WHERE user_id=$1", [id]);
 		if (result.rows.length > 0 && result.rows[0].img_url) {
 			const path = storagePath + result.rows[0].img_url;
-			fs.unlinkSync(path);
+
+			if (fs.existsSync(path)) {
+				fs.unlinkSync(path);
+			}
 		};
 
 		await updateUserField(id, "img_url", img_url);
@@ -368,7 +371,9 @@ router.delete("/", async (req, res) => {
 			const avatarResult = await db.query("SELECT img_url FROM user_details WHERE user_id=$1", [userId]);
 			if (avatarResult.rows.length === 1 && avatarResult.rows[0].img_url) {
 				const path = storagePath + avatarResult.rows[0].img_url;
-				fs.unlinkSync(path);
+				if (fs.existsSync(path)) {
+					fs.unlinkSync(path);
+				}
 			}
 			await db.query("DELETE FROM user_details WHERE user_id=$1", [userId]);
 			await db.query("DELETE FROM users WHERE id=$1", [userId]);

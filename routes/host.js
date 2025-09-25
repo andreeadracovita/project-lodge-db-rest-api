@@ -338,7 +338,9 @@ function deletePhotos(fileNameArray) {
 	if (fileNameArray) {
 		for (let fileName of fileNameArray) {
 			const path = storagePath + fileName;
-			fs.unlinkSync(path);
+			if (fs.existsSync(path)) {
+				fs.unlinkSync(path);
+			}
 		}
 	}
 }
