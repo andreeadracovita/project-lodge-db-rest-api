@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS features (
 );
 INSERT INTO features
 VALUES (1, 'free WiFi'), (2, 'free parking'), (3, 'garden'), (4, 'kitchen'), (5, 'AC'), (6, 'hot tub/Jacuzzi'),
-(7, 'tea/coffee maker'), (8, 'refrigerator'), (9, 'TV'), (10, 'free parking'), (11, 'garden view'), (12, 'sea view'),
+(7, 'tea/coffee maker'), (8, 'refrigerator'), (9, 'TV'), (11, 'garden view'), (12, 'sea view'),
 (13, 'lake view'), (14, 'mountain view'), (15, 'gym equipment'), (16, 'dedicated workspace'), (17, 'BBQ facilities'),
 (18, 'pets allowed');
 

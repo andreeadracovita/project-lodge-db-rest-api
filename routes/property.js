@@ -13,8 +13,8 @@ router.get("/home", async (req, res) => {
 	const checkIn = new Date();
 	const currentDayIndex = checkIn.getDay();
 	checkIn.setDate(checkIn.getDate() + 6 - currentDayIndex);
-	const checkOut = new Date();
-	checkOut.setDate(checkIn.getDate() + 1);
+	const checkOut = new Date(checkIn);
+	checkOut.setDate(checkOut.getDate() + 1);
 	try {
 		const query = `SELECT p.id, p.title, p.geo, p.city, p.country, pd.rating, pd.reviews_no, pd.images_url_array,
 			pd.price_night AS price_night_local, pd.local_currency
