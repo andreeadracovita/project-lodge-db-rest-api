@@ -305,7 +305,7 @@ function partitionBookings(reservations) {
 // GET /host/bookings/partitioned
 router.get("/bookings/partitioned", async (req, res) => {
 	try {
-		const query = `SELECT b.id, b.first_name, b.last_name, b.guests, b.check_in, b.check_out, b.pin_code, p.title
+		const query = `SELECT b.id, b.first_name, b.last_name, b.guests, b.check_in, b.check_out, b.pin, p.title
 			FROM bookings AS b
 			JOIN property_details AS pd
 			ON b.property_id=pd.property_id
