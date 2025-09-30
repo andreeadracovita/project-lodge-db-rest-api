@@ -81,9 +81,9 @@ router.post("/new", async (req, res) => {
 		const pinCode = generateCode();
 
 		const query = `INSERT INTO bookings (email, property_id, first_name, last_name, guest_address, guest_city, guest_country,
-			guest_phone_no, check_in, check_out, guests, booking_status_id, pin_code, amount, currency)
+			guest_phone_no, check_in, check_out, guests, booking_status_id, pin, amount, currency)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-			RETURNING id, pin_code`;
+			RETURNING id, pin`;
 		const result = await db.query(query, [
 			email, property_id, first_name, last_name, address, city, country,
 			phone_number, new Date(check_in).toISOString().slice(0, 10), new Date(check_out).toISOString().slice(0, 10),
@@ -113,7 +113,7 @@ router.get("/", async (req, res) => {
 				ON b.booking_status_id=bs.id
 				WHERE b.id=$1`;
 			const result = await db.query(query, [bookingId]);
-			if (result.rows.length > 0 && result.rows[0].pin_code === pinCode) {
+			if (result.rows.length > 0 && result.rows[0].pin === pinCode) {
 				return res.json(result.rows[0]);
 			}
 			return res.status(401).send("Unauthorized access");
@@ -132,7 +132,7 @@ router.post("/authorize", async (req, res) => {
 	if (confirmation_number && pin_code) {
 		try {
 			const result = await db.query("SELECT pin_code FROM bookings WHERE id=$1", [confirmation_number]);
-			if (result.rows.length > 0 && pin_code === result.rows[0].pin_code) {
+			if (result.rows.length > 0 && pin_code === result.rows[0].pin) {
 				return res.json({ authorized: true });
 			}
 			return res.json({ authorized: false });
@@ -151,7 +151,7 @@ router.post("/cancel", async (req, res) => {
 	if (confirmation_number && pin_code) {
 		try {
 			// Authorize request first: user knows confirmation number and pin code
-			const result = await db.query("SELECT pin_code, booking_status_id FROM bookings WHERE id=$1", [confirmation_number]);
+			const result = await db.query("SELECT pin, booking_status_id FROM bookings WHERE id=$1", [confirmation_number]);
 			if (result.rows.length > 0) {
 				const today = new Date();
 				const booking = result.rows[0];
@@ -162,7 +162,7 @@ router.post("/cancel", async (req, res) => {
 				if (today <= new Date(booking.check_out)) {
 					return res.status(403).send("Cannot cancel a completed booking");
 				}
-				if (pin_code === booking.pin_code) {
+				if (pin_code === booking.pin) {
 					const result = await db.query("UPDATE bookings SET booking_status_id=3 WHERE id=$1 RETURNING id", [confirmation_number]);
 					if (result.rows.length > 0) {
 						return res.status(200).send("Successfully cancelled a booking.");
