@@ -173,7 +173,21 @@ router.patch("/property/:id", async (req, res) => {
 		await updatePropertyField(id, "country", country);
 	}
 	if (is_listed !== undefined) {
-		await updatePropertyField(id, "is_listed", is_listed);
+		// A property can be listed only if it has at least one photo and price > 0
+		const propDetailsQuery = `
+			SELECT images_url_array, price_night
+			FROM property_details
+			WHERE property_id=$1
+		`;
+		const propDetailsResult = await db.query(propDetailsQuery, [id]);
+		if (
+			propDetailsResult.rows.length > 0 &&
+			propDetailsResult.rows[0].images_url_array &&
+			propDetailsResult.rows[0].images_url_array.length >= 1 &&
+			propDetailsResult.rows[0].price_night > 0
+		) {
+			await updatePropertyField(id, "is_listed", is_listed);
+		}
 	}
 	if (street !== undefined) {
 		if (street === "") {
