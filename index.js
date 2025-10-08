@@ -9,6 +9,7 @@ import createMemoryStore from "memorystore";
 
 import "./passport.js";
 import { initDB } from "./db/db.js";
+import adminRouter from "./routes/admin.js";
 import authRouter from "./routes/auth.js";
 import bookingRouter from "./routes/booking.js";
 import hostRouter from "./routes/host.js";
@@ -46,8 +47,9 @@ app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
   res.render("apiDocs.ejs");
-})
+});
 
+app.use("/admin", passport.authenticate('jwt', {session: false}), adminRouter);
 app.use("/auth", authRouter);
 app.use("/booking", bookingRouter);
 app.use("/host", passport.authenticate('jwt', {session: false}), hostRouter);

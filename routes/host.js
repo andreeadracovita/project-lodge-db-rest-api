@@ -1,8 +1,8 @@
 import express from "express";
-import fs from "fs";
 
-import { siteCurrency, storagePath } from "../constants.js";
+import { siteCurrency } from "../constants.js";
 import db from "../db/db.js";
+import { deleteProperty, deletePhotos } from "../utils/utils.js";
 
 const router = express.Router();
 
@@ -334,17 +334,6 @@ router.get("/bookings/calendar/property/:id", async (req, res) => {
 	}
 });
 
-function deletePhotos(fileNameArray) {
-	if (fileNameArray) {
-		for (let fileName of fileNameArray) {
-			const path = storagePath + fileName;
-			if (fs.existsSync(path)) {
-				fs.unlinkSync(path);
-			}
-		}
-	}
-}
-
 // DELETE /host/property/1
 router.delete("/property/:id", async (req, res) => {
 	const id = parseInt(req.params.id);
@@ -353,27 +342,8 @@ router.delete("/property/:id", async (req, res) => {
 		if (result.rows.length === 1) {
 			const hostId = result.rows[0].host_id;
 			if (hostId === req.user.id) {
-				// Check if property_id appears in any bookings. Delete only if no upcoming bookings.
-				const bookingQuery = `
-					SELECT * FROM bookings AS b
-					JOIN booking_status AS bs
-					ON bs.id=b.booking_status_id
-					WHERE b.property_id=$1 AND b.check_out>=$2 AND not bs.name!='cancelled'`;
-				const bookingResult = await db.query(bookingQuery, [id, new Date().toISOString().slice(0, 10)]);
-				if (bookingResult.rows.length === 0) {
-					// Delete associated entries from wishlist
-					await db.query("DELETE FROM wishlist WHERE property_id=$1", [id]);
-
-					await db.query("DELETE FROM property_details WHERE property_id=$1", [id]);
-					await db.query("DELETE FROM properties WHERE id=$1", [id]);
-
-					// Delete associated images from storage
-					deletePhotos(result.rows[0].images_url_array);
-
-					return res.status(200).send("Success");
-				} else {
-					return res.status(403).send("Cannot delete property with associated bookings.");
-				}
+				await deleteProperty(id);
+				return res.status(200).send(`Property with id ${id} successfully deleted`);
 			} else {
 				return res.status(401).send("Unauthorized");
 			}
